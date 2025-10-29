@@ -33,11 +33,15 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
     return;
     }
+    //Mã hóa password trước khi gửi
+    // const hashedPassword = await SecureStore.getItemAsync('password');
     //Gọi API đăng nhập
     try {
-      const response = await axios.post('http://172.20.10.10:3000/api/auth/login', { email, password });
+        //mai check lại xem cần mã hóa  mật khẩu trước khi post vào api không
+      const response = await axios.post('http://172.20.10.10:3000/api/auth/login', { email, password }); 
       await SecureStore.setItemAsync('token', response.data.token);
-      navigation.navigate('Products'); // Chuyển hướng sau khi đăng nhập
+      Alert.alert('Success', 'Login successful');
+      navigation.navigate('ProductsScreen'); // Chuyển hướng sau khi đăng nhập
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'Invalid credentials or server issue');
@@ -108,7 +112,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
             {/* Sign Up Link */}
             <View style={styles.footer}>
                 <Text style={styles.footerText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <TouchableOpacity onPress={() => navigation.navigate('RegisterScreen')}>
                     <Text style={styles.footerLink}>Sign Up</Text>
                 </TouchableOpacity>
             </View>
