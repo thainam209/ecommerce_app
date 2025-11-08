@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
       const response = await axios.post('http://172.20.10.10:3000/api/auth/login', { email, password }); 
       await SecureStore.setItemAsync('token', response.data.token);
       Alert.alert('Success', 'Login successful');
-      navigation.navigate('ProductsScreen'); // Chuyển hướng sau khi đăng nhập
+      navigation.navigate('HomeScreen'); // Chuyển hướng sau khi đăng nhập
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'Invalid credentials or server issue');

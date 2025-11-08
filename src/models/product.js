@@ -33,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE
-    }
+    },
+    image: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Product',
