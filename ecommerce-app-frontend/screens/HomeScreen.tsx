@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, TextInput, ActivityIndicator } from 'react-native';
 
-const Cate = ({ name }:any) => {
+const Cate = ({ name, onPress }:any) => {
   return (
-    <TouchableOpacity style={styles.box}>
+    <TouchableOpacity style={styles.box} onPress={onPress}>
       <View style={{ flexDirection: 'row' }}>
         <Text style={styles.namecate}>{name}</Text>
       </View>
@@ -101,6 +101,10 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       getCategory(1);
       getProduct(1);
     }, [getCategory, getProduct]); //chỉ gọi lại hàm khi 1 trong 2 thay đổi
+
+    const search = () => {
+      console.log('Search clicked');
+    };
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
@@ -108,7 +112,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           <Text style={{ fontSize: 22, fontWeight: 600, fontFamily: 'Manrope', color: '#F8F9FB' }}>
             Hey, Halal
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('ShoppingCart')}>
+          <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
             <Image
               source={require('../assets/icon_bag.png')}
               style={{ width: 18, height: 20, marginLeft: 270, marginTop: 3 }}
@@ -116,11 +120,13 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           </TouchableOpacity>
         </View>
         <View style={styles.search}>
-          <Image
-            source={require('../assets/icon_search.png')}
-            style={{ width: 20, height: 20, marginLeft: 30 }}
-          />
-          <TextInput placeholder='Search Products or store' placeholderTextColor='#8891A5' style={{ marginLeft: 10, fontSize: 16, fontWeight: 500, color: 'white' }} />
+          <TouchableOpacity onPress={search}>
+            <Image
+              source={require('../assets/icon_search.png')}
+              style={{ width: 20, height: 20, marginLeft: 30 }}
+            />
+          </TouchableOpacity>
+          <TextInput placeholder='Search Products' placeholderTextColor='#8891A5' style={{ marginLeft: 10, fontSize: 16, fontWeight: 500, color: 'white' }} />
         </View>
         <View style={styles.text}>
           <Text style={styles.text1}>DELIVERY TO</Text>
@@ -156,7 +162,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                   key={c.id ?? idx}
                   name={c.name}
                   description={c.description ?? ''}
-                  onPress={() => navigation.navigate('ProductScreen', { categoryId: c.id })}
+                  onPress={() => navigation.navigate('ProductScreen', { categoryId: c.id, categoryName: c.name })}
                 />
               ))
             )}

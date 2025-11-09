@@ -21,9 +21,12 @@ export default function ProductDetailScreen({ navigation , route }: any) {
     }, [productId]);
 
   const addToCart = (item: any) => {
-    // Thêm sản phẩm vào giỏ hàng (cần triển khai CartContext hoặc logic giỏ hàng)
-    console.log('Adding to cart:', item);
-  }
+    // Implement add to cart functionality
+  };
+
+  const buyNow = (item: any) => {
+    // Implement buy now functionality
+  };
 
   useEffect(() => {
     getProductDetail(productId);
@@ -49,16 +52,13 @@ export default function ProductDetailScreen({ navigation , route }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>{product.name}</Text>
       </View>
       <View style={styles.imagePlaceholder}>
         <Image
           source={
-            product.image && product.images.length > 0
-              ? { uri: product.image[0].src }
+            product.image
+              ? { uri: product.image }
               : require('../assets/icon_image.png')
           }
           style={styles.productImage}
@@ -73,25 +73,18 @@ export default function ProductDetailScreen({ navigation , route }: any) {
         <Text style={styles.sectionContent}>
           {product.description ? product.description.replace(/<[^>]+>/g, '') : 'No details.'}
         </Text>
-        <TouchableOpacity style={styles.section}>
-          <Text style={styles.sectionTitle}>Reviews Facts</Text>
-        </TouchableOpacity>
       </ScrollView>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addToCartButton}
-          onPress={() => {
-            addToCart({ id: product.id, name: product.name, price: product.price, 
-              image: product.images && product.images.length > 0 ? product.images[0].src : null
-             });
-            navigation.navigate('ShoppingCart');
-          }}
+          onPress={addToCart}
         >
           <Text style={styles.buttonText}>Add to Cart</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.buyNowButton}>
+        {/* Khi buy sản phẩm chuyển thẳng id sản phẩn đến orderitems */}
+        <TouchableOpacity style={styles.buyNowButton} onPress={buyNow}>
           <Text style={styles.buttonText}>Buy Now</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -111,21 +104,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 26,
     fontWeight: '600',
     color: '#2A4BA0',
+    textAlign: 'center',
+    flex: 1,
+    marginTop: 10,
   },
   imagePlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E0E0E0',
-    height: 200,
+    height: 230,
     margin: 20,
     borderRadius: 16,
   },
   productImage: {
     width: 388,
-    height: 200,
+    height: 230,
     borderRadius: 16,
   },
   content: {
@@ -133,7 +129,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   productName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: '#1A2530',
   },

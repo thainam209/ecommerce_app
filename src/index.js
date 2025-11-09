@@ -23,9 +23,12 @@ Object.keys(sequelize.models).forEach(modelName => {
 sequelize.sync().then(() => console.log('DB connected')).catch(err => console.error(err));
 
 // Middleware xác thực
+// Middleware xác thực JWT để bảo vệ các route cần đăng nhập
 const authenticate = (req, res, next) => {
+  // Lấy token từ header Authorization theo định dạng Bearer <token> 
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
+  // Xác thực token và gán thông tin user vào req.user nếu hợp lệ 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = user;
