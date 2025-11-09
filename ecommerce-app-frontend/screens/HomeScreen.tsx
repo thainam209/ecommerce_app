@@ -126,7 +126,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
               style={{ width: 20, height: 20, marginLeft: 30 }}
             />
           </TouchableOpacity>
-          <TextInput placeholder='Search Products' placeholderTextColor='#8891A5' style={{ marginLeft: 10, fontSize: 16, fontWeight: 500, color: 'white' }} />
+          <TextInput placeholder='Search Products' placeholderTextColor='#8891A5' style={{ marginLeft: 10, fontSize: 16, fontWeight: 500, color: 'white',width: 300 }} />
         </View>
         <View style={styles.text}>
           <Text style={styles.text1}>DELIVERY TO</Text>

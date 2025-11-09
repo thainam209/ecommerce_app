@@ -54,19 +54,9 @@ export default function ProductScreen({ navigation , route }: any) {
   return (
     <View style={{backgroundColor:'#FFFFFF', flex: 1}}>
         <View style={styles.header}>
-            <View style={{width:150,marginLeft:120,marginTop: 13,height:50}}>
+            <View style={{width:150,marginLeft:170,marginTop: 13,height:50}}>
                 <Text style={{fontSize:30,color:'#153075',fontWeight:'600'}}>{categoryName}</Text>
             </View>
-            <Image
-                source={require('../assets/icon_search(black).png')}
-                style={{marginTop:15,marginLeft: 45}}
-            />
-            <TouchableOpacity onPress={() => navigation.navigate('ShoppingCart')}>
-                <Image
-                    source={require('../assets/icon_bag(black).png')}
-                    style={{marginTop:15,marginLeft: 45}}
-                />
-            </TouchableOpacity>
         </View>
         <ScrollView style={{flex:1}}>
           <View style={{flexWrap:'wrap', flexDirection:'row'}}>

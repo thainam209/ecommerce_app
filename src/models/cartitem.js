@@ -22,19 +22,19 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER
     },
-    UserId: {
+    userId: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Users',
+        model: 'user',
         key: 'id'
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    ProductId: {
+    productId: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Products',
+        model: 'product',
         key: 'id'
       },
       onUpdate: 'CASCADE',

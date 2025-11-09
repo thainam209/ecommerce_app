@@ -20,8 +20,8 @@ export default function App() {
         <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="ProductScreen" component={ProductScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="ProductDetailScreen" component={ProductDetailScreen} options={{ headerShown: false }}/>
-        {/* <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }}/> */}
-        <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: false }}/>
+        {/* <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: false }}/> */}
       </Stack.Navigator>
     </NavigationContainer>
   );

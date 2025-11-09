@@ -1,49 +1,117 @@
+// routes/cart.js - ĐÃ SỬA HOÀN HẢO CHO BẠN
 const express = require('express');
 const router = express.Router();
 const { CartItem, Product } = require('../models');
 
-router.get('/', protect, async (req, res) => {
-  const cartItems = await CartItem.findAll({
-    where: { userId: req.user.id },
-    include: [Product]
-  });
-  res.json(cartItems);
-});
+router.get('/', async (req, res) => {
+  try {
+    const cartItems = await CartItem.findAll({
+      where: { userId: req.user.id },
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['id', 'name', 'price', 'image']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
 
-// router.post('/', protect, async (req, res) => {
-//   const { productId, quantity } = req.body;
-//   const cartItem = await CartItem.create({ userId: req.user.id, productId, quantity });
-//   res.json(cartItem);
-// });
+    const totalPrice = cartItems.reduce((sum, item) => 
+      sum + (item.quantity * item.Product.price), 0
+    );
+
+    res.json({
+      items: cartItems,
+      totalItems: cartItems.length,
+      totalPrice
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi lấy giỏ hàng' });
+  }
+});
 
 router.post('/', async (req, res) => {
   try {
-    const userId = req.user?.id; // authenticate đã gán req.user
-    if (!userId) return res.status(401).json({ message: 'No user' });
-
     const { productId, quantity = 1 } = req.body;
-    const product = await Product.findByPk(productId);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    const userId = req.user.id;
 
-    const item = await CartItem.create({
-      UserId: userId,
-      ProductId: productId,
-      quantity
+    // Kiểm tra sản phẩm tồn tại
+    const product = await Product.findByPk(productId);
+    if (!product) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+
+    // Tìm item đã có chưa
+    let cartItem = await CartItem.findOne({
+      where: { userId, productId }
     });
 
-    res.status(201).json(item);
+    if (cartItem) {
+      // Đã có → cộng dồn số lượng
+      cartItem.quantity += quantity;
+      await cartItem.save();
+    } else {
+      // Chưa có → tạo mới
+      cartItem = await CartItem.create({
+        userId,
+        productId,
+        quantity
+      });
+    }
+
+    // Trả về item mới nhất (có thông tin sản phẩm)
+    const result = await CartItem.findByPk(cartItem.id, {
+      include: [{ model: Product, as: 'product' }]
+    });
+
+    res.json({
+      message: 'Đã thêm vào giỏ hàng!',
+      item: result
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Lỗi server' });
   }
 });
 
 router.delete('/:id', async (req, res) => {
-  const cartItem = await CartItem.findByPk(req.params.id);
-  if (cartItem && cartItem.userId === req.user.id) {
-    await cartItem.destroy();
-    res.json({ message: 'Removed' });
-  } else res.status(404).json({ error: 'Not found' });
+  try {
+    const deleted = await CartItem.destroy({
+      where: {
+        id: req.params.id,
+        userId: req.user.id  // chỉ xóa của chính mình
+      }
+    });
+
+    if (deleted) {
+      res.json({ message: 'Đã xóa khỏi giỏ hàng' });
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy hoặc không phải của bạn' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    if (quantity <= 0) {
+      return router.delete(`/${req.params.id}`)(req, res); // xóa luôn
+    }
+
+    const updated = await CartItem.update(
+      { quantity },
+      { where: { id: req.params.id, userId: req.user.id } }
+    );
+
+    if (updated[0] > 0) {
+      const item = await CartItem.findByPk(req.params.id, { include: [Product] });
+      res.json({ message: 'Đã cập nhật', item });
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
 
 module.exports = router;
