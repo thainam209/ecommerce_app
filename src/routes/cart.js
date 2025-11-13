@@ -5,18 +5,18 @@ const { CartItem, Product } = require('../models');
 
 router.get('/', async (req, res) => {
   try {
+    const userId = req.user.id;
     const cartItems = await CartItem.findAll({
-      where: { userId: req.user.id },
+      where: { userId },
       include: [{
         model: Product,
         as: 'product',
-        attributes: ['id', 'name', 'price', 'image']
       }],
       order: [['createdAt', 'DESC']]
     });
 
     const totalPrice = cartItems.reduce((sum, item) => 
-      sum + (item.quantity * item.Product.price), 0
+      sum + (item.quantity * item.product.price), 0
     );
 
     res.json({
@@ -69,6 +69,28 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+// Thêm route mới
+router.post('/clear-selected', async (req, res) => {
+  const { cartItemIds } = req.body;
+
+  if (!Array.isArray(cartItemIds) || cartItemIds.length === 0) {
+    return res.status(400).json({ error: 'Không có sản phẩm để xóa' });
+  }
+
+  try {
+    await CartItem.destroy({
+      where: {
+        id: cartItemIds,
+        userId: req.user.id
+      }
+    });
+
+    res.json({ success: true, deleted: cartItemIds.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi xóa giỏ hàng' });
   }
 });
 

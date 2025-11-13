@@ -5,12 +5,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Product hasMany OrderItems (một Product có nhiều OrderItems)
       Product.hasMany(models.OrderItem, {
-        foreignKey: 'ProductId',
+        foreignKey: 'productId',
         as: 'orderItems'
       });
       // Product hasMany CartItems (một Product có nhiều CartItems)
       Product.hasMany(models.CartItem, {
-        foreignKey: 'ProductId',
+        foreignKey: 'productId',
         as: 'cartItems'
       });
     }

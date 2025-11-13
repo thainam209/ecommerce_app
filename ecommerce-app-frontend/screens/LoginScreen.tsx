@@ -3,6 +3,7 @@ import { StyleSheet} from 'react-native';
 import { View, TextInput, TouchableOpacity, Text, Alert, Switch } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import API_URL from '../config/api';
 
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
@@ -38,11 +39,12 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     //Gọi API đăng nhập
     try {
         //mai check lại xem cần mã hóa  mật khẩu trước khi post vào api không
-      const response = await axios.post('http://172.20.10.10:3000/api/auth/login', { email, password }); 
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password }); 
       await SecureStore.setItemAsync('token', response.data.token);
       Alert.alert('Success', 'Login successful');
       navigation.navigate('HomeScreen'); // Chuyển hướng sau khi đăng nhập
     } catch (error) {
+        console.log({API_URL})
       console.error('Login error:', error);
       Alert.alert('Error', 'Invalid credentials or server issue');
     }

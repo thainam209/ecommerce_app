@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ImageBackground, TextInput, ActivityIndicator } from 'react-native';
+import API_URL from '../config/api';
 
 const Cate = ({ name, onPress }:any) => {
   return (
@@ -51,7 +52,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       if (isLoadingCategories) return; //nếu đang load thì bỏ qua lời gọi hàm mới, tránh gọi api nhiều lần
       setIsLoadingCategories(true);
       try {
-        const response = await axios.get('http://192.168.10.2:3000/api/categories', {
+        // 192.168.10.2
+        // 172.20.10.10
+        const response = await axios.get(`${API_URL}/categories`, {
           params: { page: requestedPage, limit }
         });
         //do sửa api thành trả về dạng { data: [], pagination: {} } nên phải gọi .data của data
@@ -76,7 +79,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       if (isLoadingProduct) return;
       setIsLoadingProduct(true);
       try {
-        const response = await axios.get('http://192.168.10.2:3000/api/products', {
+        const response = await axios.get(`${API_URL}/products`, {
           params: { page: requestedPage, limit: limitProduct }
         });
         const data = response.data.data || [];

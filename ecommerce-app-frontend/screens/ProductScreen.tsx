@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, ImageBackground } from 'react-native';
+import API_URL from '../config/api';
 
 const Product = ({ Image, price, name, onPress }:any) => {
     return (
@@ -28,7 +29,7 @@ export default function ProductScreen({ navigation , route }: any) {
 
   const getProductbyCategory = useCallback(async (categoryId: any) => {
       try {
-        const response = await axios.get('http://192.168.10.2:3000/api/products/category/' + categoryId); 
+        const response = await axios.get(`${API_URL}/products/category/` + categoryId); 
         const data = response.data;
         setProducts(data);
         } catch (error) {

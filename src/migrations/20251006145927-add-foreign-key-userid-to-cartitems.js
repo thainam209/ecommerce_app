@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.addConstraint('CartItems', {
-      fields: ['UserId'],
+      fields: ['userId'],
       type: 'foreign key',
       name: 'FK_CartItems_Users',
       references: {

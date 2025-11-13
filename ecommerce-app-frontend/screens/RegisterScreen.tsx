@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, Alert, TouchableOpacity, Image } from 'react-native';
 import axios from 'axios';
 import { StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import API_URL from '../config/api';
 
 export default function RegisterScreen({ navigation }: { navigation: any }) {
   const [username, setUsername] = useState('');
@@ -43,7 +42,7 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
     setIsLoading(true);
     try {
       //Khi gọi api cần thay đổi localhost thành IP của máy chủ
-      await axios.post('http://172.20.10.10:3000/api/auth/register', { username, email, password });
+      await axios.post(`${API_URL}/auth/register`, { username, email, password });
       Alert.alert('Success', 'Registration successful, please login');
       navigation.navigate('LoginScreen');
     } catch (error) {

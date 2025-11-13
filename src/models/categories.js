@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Categories hasMany Products (một Categories có nhiều Products)
       Categories.hasMany(models.Product, {
-        foreignKey: 'CategoryId',
+        foreignKey: 'categoryId',
         as: 'products'
       });
     }
