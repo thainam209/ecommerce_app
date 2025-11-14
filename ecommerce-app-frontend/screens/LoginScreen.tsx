@@ -3,7 +3,7 @@ import { StyleSheet} from 'react-native';
 import { View, TextInput, TouchableOpacity, Text, Alert, Switch } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-
+import API_URL from '../config/api';
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
@@ -37,8 +37,8 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     // const hashedPassword = await SecureStore.getItemAsync('password');
     //Gọi API đăng nhập
     try {
-        //mai check lại xem cần mã hóa  mật khẩu trước khi post vào api không
-      const response = await axios.post('http://172.20.10.10:3000/api/auth/login', { email, password }); 
+        //mai check lại xem cần mã hóa mật khẩu trước khi post vào api không
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password }); 
       await SecureStore.setItemAsync('token', response.data.token);
       Alert.alert('Success', 'Login successful');
       navigation.navigate('HomeScreen'); // Chuyển hướng sau khi đăng nhập

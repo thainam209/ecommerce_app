@@ -42,10 +42,14 @@ const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const cateRoutes = require('./routes/cate');
+const orderItemRoutes = require('./routes/orderitems');
+const chatRoutes = require('./routes/chat');
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', authenticate, cartRoutes);
 app.use('/api/orders', authenticate, orderRoutes);
 app.use('/api/categories', cateRoutes);
+app.use('/api/orderitems', authenticate, orderItemRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
