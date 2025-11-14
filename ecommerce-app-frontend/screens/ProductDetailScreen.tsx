@@ -71,7 +71,7 @@ export default function ProductDetailScreen({ navigation, route }: any) {
       setQuantity(1);
 
       Alert.alert('Thành công!', `${quantity} sản phẩm đã được thêm vào giỏ hàng`, [
-        { text: 'Tiếp tục mua' },
+        { text: 'Tiếp tục mua', onPress: () => navigation.goBack() },
         { text: 'Xem giỏ hàng', onPress: () => navigation.navigate('CartScreen') },
       ]);
     } catch (error: any) {
