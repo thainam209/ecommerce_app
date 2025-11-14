@@ -1,34 +1,56 @@
+// routes/orders.js
 const express = require('express');
 const router = express.Router();
-const { Order, OrderItem, CartItem, Product } = require('../models');
-const { Sequelize } = require('sequelize');
+const { Order } = require('../models');
 
 router.get('/', async (req, res) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   const orders = await Order.findAll({
-    where: { userId: req.user.id },
-    include: [{ model: OrderItem, include: [Product] }]
+    where: { userId: req.user.id }
   });
-  res.json(orders);
+  res.json({ orders });
 });
 
 router.post('/', async (req, res) => {
-  const cartItems = await CartItem.findAll({ where: { userId: req.user.id }, include: [Product] });
-  if (cartItems.length === 0) return res.status(400).json({ error: 'Cart empty' });
+  const { total, status } = req.body;
 
-  const total = cartItems.reduce((sum, item) => sum + item.quantity * item.Product.price, 0);
-  const order = await Order.create({ userId: req.user.id, status: 'pending', total });
-
-  for (const item of cartItems) {
-    await OrderItem.create({
-      orderId: order.id,
-      productId: item.productId,
-      quantity: item.quantity,
-      price: item.Product.price
-    });
-    await item.destroy();  // Xóa giỏ hàng sau khi đặt hàng
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  res.json(order);
+  const totalAmount = Number(total);
+  if (isNaN(totalAmount) || totalAmount <= 0) {
+    return res.status(400).json({ error: 'Tổng tiền không hợp lệ' });
+  }
+
+  try {
+    const order = await Order.create({
+      userId: req.user.id,
+      total: totalAmount,
+      status: status?.trim() || 'pending'
+    });
+
+    res.json({
+      success: true,
+      message: 'Tạo đơn hàng thành công',
+      order: {
+        id: order.id,
+        userId: order.userId,
+        total: Number(order.total),
+        status: order.status,
+        createdAt: order.createdAt
+      }
+    });
+
+  } catch (err) {
+    console.error('LỖI TẠO ORDER:', err);
+    res.status(500).json({
+      error: 'Không thể tạo đơn hàng',
+      details: err.message || 'Lỗi không xác định'
+    });
+  }
 });
 
 module.exports = router;

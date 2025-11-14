@@ -1,20 +1,23 @@
 'use strict';
 const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class OrderItem extends Model {
     static associate(models) {
       // OrderItem belongsTo Order (một OrderItem thuộc về một Order)
       OrderItem.belongsTo(models.Order, {
-        foreignKey: 'OrderId',
+        foreignKey: 'orderId',
         as: 'order'
       });
+      
       // OrderItem belongsTo Product (một OrderItem thuộc về một Product)
       OrderItem.belongsTo(models.Product, {
-        foreignKey: 'ProductId',
+        foreignKey: 'productId',
         as: 'product'
       });
     }
   }
+  
   OrderItem.init({
     id: {
       allowNull: false,
@@ -22,38 +25,57 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER
     },
-    OrderId: {
+    orderId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       references: {
-        model: 'Orders',
+        model: 'Order',
         key: 'id'
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    ProductId: {
+    productId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       references: {
-        model: 'Products',
+        model: 'Product',
         key: 'id'
       },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
     },
-    quantity: DataTypes.INTEGER,
-    price: DataTypes.DECIMAL(10, 2),
+    quantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      validate: {
+        min: 1 // Đảm bảo quantity >= 1
+      }
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0 // Đảm bảo price >= 0
+      }
+    },
     createdAt: {
       allowNull: false,
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     },
     updatedAt: {
       allowNull: false,
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     }
   }, {
     sequelize,
     modelName: 'OrderItem',
-    tableName: 'OrderItems' // Giả sử bảng tên OrderItems
+    tableName: 'OrderItems',
+    timestamps: true // Tự động quản lý createdAt/updatedAt
   });
+  
   return OrderItem;
 };

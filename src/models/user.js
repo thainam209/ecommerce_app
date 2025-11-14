@@ -5,12 +5,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // User hasMany Orders (một User có nhiều Orders)
       User.hasMany(models.Order, {
-        foreignKey: 'UserId', // Khóa ngoại trong bảng Orders
+        foreignKey: 'userId', // Khóa ngoại trong bảng Orders
         as: 'orders' // Alias để sử dụng trong include
       });
       // User hasMany CartItems (một User có nhiều CartItems)
       User.hasMany(models.CartItem, {
-        foreignKey: 'UserId', // Khóa ngoại trong bảng CartItems
+        foreignKey: 'userId', // Khóa ngoại trong bảng CartItems
         as: 'cartItems'
       });
     }

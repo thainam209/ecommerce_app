@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.addConstraint('Orders', {
-      fields: ['UserId'],
+      fields: ['userId'],
       type: 'foreign key',
       name: 'FK_Orders_Users', // Tên ràng buộc, phải duy nhất
       references: {

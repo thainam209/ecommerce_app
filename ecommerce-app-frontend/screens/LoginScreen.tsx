@@ -43,6 +43,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
       Alert.alert('Success', 'Login successful');
       navigation.navigate('HomeScreen'); // Chuyển hướng sau khi đăng nhập
     } catch (error) {
+        console.log({API_URL})
       console.error('Login error:', error);
       Alert.alert('Error', 'Invalid credentials or server issue');
     }

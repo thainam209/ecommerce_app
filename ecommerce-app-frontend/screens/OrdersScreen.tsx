@@ -1,13 +1,10 @@
 import React from 'react';
 import { View, Text, Button } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../type/types';
+import axios from 'axios';
+import API_URL from '../config/api';
 
-type OrdersScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Orders'>;
-
-export default function OrdersScreen() {
-  const navigation = useNavigation<OrdersScreenNavigationProp>();
+export default function OrdersScreen({navigation}: any) {
 
   // Giả định dữ liệu đơn hàng (thay bằng API nếu có)
   const orders = []; // Thêm logic lấy orders từ API nếu có

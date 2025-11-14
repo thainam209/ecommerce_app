@@ -5,12 +5,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // CartItem belongsTo User (một CartItem thuộc về một User)
       CartItem.belongsTo(models.User, {
-        foreignKey: 'UserId',
+        foreignKey: 'userId',
         as: 'user'
       });
       // CartItem belongsTo Product (một CartItem thuộc về một Product)
       CartItem.belongsTo(models.Product, {
-        foreignKey: 'ProductId',
+        foreignKey: 'productId',
         as: 'product'
       });
     }
@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     productId: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'product',
+        model: 'Product',
         key: 'id'
       },
       onUpdate: 'CASCADE',
