@@ -52,8 +52,6 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       if (isLoadingCategories) return; //nếu đang load thì bỏ qua lời gọi hàm mới, tránh gọi api nhiều lần
       setIsLoadingCategories(true);
       try {
-        // 192.168.10.2
-        // 172.20.10.10
         const response = await axios.get(`${API_URL}/categories`, {
           params: { page: requestedPage, limit }
         });

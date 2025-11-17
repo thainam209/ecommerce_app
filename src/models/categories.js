@@ -8,6 +8,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'categoryId',
         as: 'products'
       });
+      // Categories hasMany Combos (một Categories có nhiều Combos)
+      Categories.hasMany(models.Combo, {
+        foreignKey: 'categoryId',
+        as: 'combos'
+      });
     }
   }
   Categories.init({
