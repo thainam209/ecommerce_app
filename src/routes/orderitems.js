@@ -43,4 +43,32 @@ router.post('/orderId/:orderId', async (req, res) => {
   }
 });
 
+//api lấy danh sách order items theo orderId
+router.post('/orderId/', async (req, res) => {
+  const { orderId } = req.body;
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    // Kiểm tra order có tồn tại và thuộc về user hiện tại không
+    const order = await Order.findOne({
+      where: { id: orderId, userId: req.user.id }
+    });
+    if (!order) {
+      return res.status(404).json({ error: 'Order không tồn tại' });
+    }
+    // Lấy danh sách order items theo orderId
+    const orderItems = await OrderItem.findAll({
+      where: { orderId },
+    });
+
+    res.json({
+      success: true,
+      items: orderItems
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

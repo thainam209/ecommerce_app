@@ -8,6 +8,9 @@ import HomeScreen from './screens/HomeScreen';
 import ProductDetailScreen from './screens/ProductDetailScreen';
 import CartScreen from './screens/CartScreen';
 import OrdersScreen from './screens/OrdersScreen';
+import ChatScreen from './screens/ChatScreen';
+import UserScreen from './screens/UserScreen';
+import OrderDetailScreen from './screens/OrderDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -22,6 +25,9 @@ export default function App() {
         <Stack.Screen name="ProductDetailScreen" component={ProductDetailScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="OrdersScreen" component={OrdersScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="UserScreen" component={UserScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="OrderDetailScreen" component={OrderDetailScreen} options={{ headerShown: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

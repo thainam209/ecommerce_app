@@ -25,7 +25,22 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      recipientName:{
+        allowNull:false,
+        type: Sequelize.STRING,
+      },
+      recipientPhone:{
+        allowNull:false,
+        type: Sequelize.STRING,
+      },
+      shippingAddress:{
+        allowNull:false,
+        type: Sequelize.STRING,
+      },
+      note: {
+        type: Sequelize.STRING,
+      } 
     });
   },
   async down(queryInterface, Sequelize) {

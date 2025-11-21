@@ -1,4 +1,3 @@
-// routes/cart.js - ĐÃ SỬA HOÀN HẢO CHO BẠN
 const express = require('express');
 const router = express.Router();
 const { CartItem, Product } = require('../models');

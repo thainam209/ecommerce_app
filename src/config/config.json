@@ -14,14 +14,14 @@
   },
   "test": {
     "username": "sa",
-    "password": "nam2092004",
+    "password": "123456",
     "database": "ecommerce",
     "host": "127.0.0.1",
     "dialect": "mssql"
   },
   "production": {
     "username": "sa",
-    "password": "nam2092004",
+    "password": "123456",
     "database": "ecommerce",
     "host": "127.0.0.1",
     "dialect": "mssql"

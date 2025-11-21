@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import {View,Text,StyleSheet,FlatList,TouchableOpacity,Image,ActivityIndicator,Alert} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import API_URL from '../config/api';
@@ -56,6 +70,13 @@ export default function CartScreen({ navigation }: any) {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+  // Modal states
+  const [modalVisible, setModalVisible] = useState(false);
+  const [receiverName, setReceiverName] = useState('');
+  const [receiverPhone, setReceiverPhone] = useState('');
+  const [receiverAddress, setReceiverAddress] = useState('');
+  const [note, setNote] = useState(''); // Thêm ghi chú
 
   const getToken = async () => {
     try {
@@ -126,9 +147,26 @@ export default function CartScreen({ navigation }: any) {
       .reduce((sum, item) => sum + item.quantity * item.product.price, 0);
   };
 
+  const validateForm = () => {
+    if (!receiverName.trim()) return 'Vui lòng nhập họ tên người nhận';
+    if (!receiverPhone.trim()) return 'Vui lòng nhập số điện thoại';
+    if (!receiverAddress.trim()) return 'Vui lòng nhập địa chỉ giao hàng';
+    if (!/^\d{9,11}$/.test(receiverPhone.replace(/\D/g, ''))) return 'Số điện thoại không hợp lệ';
+    return null;
+  };
+
   const checkout = async () => {
     if (selectedItems.length === 0) {
       Alert.alert('Chưa chọn', 'Vui lòng chọn ít nhất 1 sản phẩm');
+      return;
+    }
+    setModalVisible(true); // Mở modal nhập thông tin
+  };
+
+  const confirmCheckout = async () => {
+    const error = validateForm();
+    if (error) {
+      Alert.alert('Lỗi', error);
       return;
     }
 
@@ -142,47 +180,69 @@ export default function CartScreen({ navigation }: any) {
       const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
       const total = getSelectedTotal();
 
-      // Tạo order mới
+      // ĐÚNG 100% với backend của bạn
       const orderRes = await axios.post(
         `${API_URL}/orders`,
-        { total, status: 'pending' },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          total: total,
+          status: 'pending',
+          recipientName: receiverName.trim(),           // Đúng tên field
+          recipientPhone: receiverPhone.trim(),         // Đúng tên field
+          shippingAddress: receiverAddress.trim(),      // Đúng tên field
+          note: note.trim() || null,                    // Có thể để trống
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       const orderId = orderRes.data.order.id;
 
-      // Tạo orderitems theo các cartitems đã chọn
-      // Mỗi một cartitem sẽ thành một orderitem
+      // Tạo các order items
       for (const item of selectedCartItems) {
         await axios.post(
           `${API_URL}/orderitems/orderId/${orderId}`,
           {
             productId: item.product.id,
             quantity: item.quantity,
-            price: item.product.price
+            price: item.product.price,
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
 
-      // Xóa cartitems đã chọn khỏi giỏ hàng
+      // Xóa giỏ hàng đã chọn
       await axios.post(
         `${API_URL}/cart/clear-selected`,
         { cartItemIds: selectedItems },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert('Thành công!', 'Đơn hàng đã được tạo!', [
-        { text: 'OK', onPress: () => {
-          setSelectedItems([]);
-          fetchCart();
-          navigation.navigate('OrdersScreen');
-        }}
-      ]);
+      // Đóng modal + reset form
+      setModalVisible(false);
+      setReceiverName('');
+      setReceiverPhone('');
+      setReceiverAddress('');
+      setNote('');
 
+      Alert.alert('Thành công!', 'Đơn hàng đã được tạo thành công!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setSelectedItems([]);
+            fetchCart();
+            navigation.navigate('OrdersScreen');
+          },
+        },
+      ]);
     } catch (error: any) {
       console.error('Lỗi checkout:', error.response?.data || error.message);
-      Alert.alert('Lỗi', error.response?.data?.error || 'Không thể thanh toán');
+      Alert.alert(
+        'Lỗi',
+        error.response?.data?.error || 
+        error.response?.data?.details || 
+        'Không thể tạo đơn hàng. Vui lòng thử lại!'
+      );
     }
   };
 
@@ -236,7 +296,7 @@ export default function CartScreen({ navigation }: any) {
             <TouchableOpacity
               style={[
                 styles.checkoutButton,
-                selectedItems.length === 0 && { backgroundColor: '#ccc' }
+                selectedItems.length === 0 && { backgroundColor: '#ccc' },
               ]}
               onPress={checkout}
               disabled={selectedItems.length === 0}
@@ -246,6 +306,69 @@ export default function CartScreen({ navigation }: any) {
           </View>
         </>
       )}
+
+      {/* Modal nhập thông tin giao hàng + ghi chú */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Thông tin giao hàng</Text>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Họ và tên người nhận"
+                  value={receiverName}
+                  onChangeText={setReceiverName}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Số điện thoại"
+                  value={receiverPhone}
+                  onChangeText={setReceiverPhone}
+                  keyboardType="phone-pad"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Địa chỉ giao hàng chi tiết"
+                  value={receiverAddress}
+                  onChangeText={setReceiverAddress}
+                />
+                <TextInput
+                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                  placeholder="Ghi chú (không bắt buộc)"
+                  value={note}
+                  onChangeText={setNote}
+                  multiline
+                />
+              </ScrollView>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.modalBtnText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: '#2A4BA0' }]}
+                  onPress={confirmCheckout}
+                >
+                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>Xác nhận thanh toán</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -293,4 +416,51 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: '600', color: '#2A4BA0' },
   checkoutButton: { backgroundColor: '#2A4BA0', padding: 16, borderRadius: 16, alignItems: 'center' },
   checkoutText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#1A2530',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  modalBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

@@ -16,8 +16,8 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-fs
-  .readdirSync(__dirname)
+// Đọc tất cả file model
+fs.readdirSync(__dirname)
   .filter(file => {
     return (
       file.indexOf('.') !== 0 &&
@@ -28,11 +28,14 @@ fs
   })
   .forEach(file => {
     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    // Với class extends Model → model.name sẽ là tên class (ví dụ: 'Combo')
     db[model.name] = model;
   });
 
+// QUAN TRỌNG: Gọi associate SAU KHI TẤT CẢ model đã được load
 Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
+  if (db[modelName] && typeof db[modelName].associate === 'function') {
+    console.log(`Associating model: ${modelName}`); // để debug
     db[modelName].associate(db);
   }
 });

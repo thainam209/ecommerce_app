@@ -3,16 +3,27 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Combo extends Model {
     static associate(models) {
-      // Có nhiều combo nằm trong 1 category
-      Combo.belongsTo(models.Categories, {
-        foreignKey: 'categoryId',
-        as: 'categories'
-      });
-      // 1 combo có nhiều combo items
-      Combo.hasMany(models.Comboitem, {
-        foreignKey: 'comboId',
-        as: 'cartItems'
-      });
+      // Kiểm tra model có tồn tại không (tránh lỗi khi load sai thứ tự)
+      if (models.Voucher) {
+        Combo.hasMany(models.Voucher, { 
+          foreignKey: 'comboId', 
+          as: 'vouchers' 
+        });
+      }
+
+      if (models.Categories) {
+        Combo.belongsTo(models.Categories, {
+          foreignKey: 'categoryId',
+          as: 'categories' // sửa as thành 'category' cho đúng 1-1
+        });
+      }
+
+      if (models.Comboitem) {
+        Combo.hasMany(models.Comboitem, {
+          foreignKey: 'comboId',
+          as: 'cartItems' // đổi tên as cho rõ ràng
+        });
+      }
     }
   }
   Combo.init({

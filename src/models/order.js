@@ -54,18 +54,29 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    // shippingAddress: {
-    //   type: DataTypes.TEXT,
-    //   allowNull: true
-    // },
+    //tên người nhận
+    recipientName: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    //số điện thoại người nhận
+    recipientPhone: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    //địa chỉ giao hàng
+    shippingAddress: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
     // paymentMethod: {
     //   type: DataTypes.STRING,
     //   allowNull: true
     // },
-    // notes: {
-    //   type: DataTypes.TEXT,
-    //   allowNull: true
-    // },
+    note: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,

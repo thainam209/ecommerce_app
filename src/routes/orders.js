@@ -8,13 +8,14 @@ router.get('/', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const orders = await Order.findAll({
-    where: { userId: req.user.id }
+    where: { userId: req.user.id },
+    order: [['createdAt', 'DESC']]
   });
   res.json({ orders });
 });
 
 router.post('/', async (req, res) => {
-  const { total, status } = req.body;
+  const { total, status, recipientName, recipientPhone, shippingAddress, note } = req.body;
 
   if (!req.user?.id) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -29,7 +30,11 @@ router.post('/', async (req, res) => {
     const order = await Order.create({
       userId: req.user.id,
       total: totalAmount,
-      status: status?.trim() || 'pending'
+      status: status?.trim() || 'pending',
+      recipientName: recipientName,
+      recipientPhone: recipientPhone,
+      shippingAddress: shippingAddress,
+      note: note
     });
 
     res.json({
@@ -52,5 +57,39 @@ router.post('/', async (req, res) => {
     });
   }
 });
+
+//api sửa trạng thái đơn hàng thành cancle
+router.put('/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // tìm order theo id
+    const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // cập nhật status
+    order.status = 'canceled';
+    await order.save();
+
+    return res.json({
+      message: 'Order canceled successfully',
+      order
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Server error',
+      error
+    });
+  }
+});
+
 
 module.exports = router;

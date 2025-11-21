@@ -5,7 +5,6 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import API_URL from '../config/api';
 
-
 export default function LoginScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +37,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     // const hashedPassword = await SecureStore.getItemAsync('password');
     //Gọi API đăng nhập
     try {
-        //mai check lại xem cần mã hóa  mật khẩu trước khi post vào api không
+        //mai check lại xem cần mã hóa mật khẩu trước khi post vào api không
       const response = await axios.post(`${API_URL}/auth/login`, { email, password }); 
       await SecureStore.setItemAsync('token', response.data.token);
       Alert.alert('Success', 'Login successful');
