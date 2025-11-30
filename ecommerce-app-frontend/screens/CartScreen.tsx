@@ -68,15 +68,19 @@ const CartItemComponent = ({
 
 export default function CartScreen({ navigation }: any) {
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const [voucher, setVoucher] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
-
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
   const [receiverAddress, setReceiverAddress] = useState('');
-  const [note, setNote] = useState(''); // Thêm ghi chú
+  const [note, setNote] = useState(''); 
+
+  //Modal voucher
+  const [voucherModalVisible, setVoucherModalVisible] = useState(false);
 
   const getToken = async () => {
     try {
@@ -109,20 +113,68 @@ export default function CartScreen({ navigation }: any) {
     }
   };
 
-  const increaseQuantity = async (productId: number) => {
-    const token = await getToken();
-    await axios.post(`${API_URL}/cart`, { productId, quantity: 1 }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchCart();
+  const fetchVoucher = async () => {
+    try{
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        navigation.navigate('Login');
+        return;
+      }
+
+      const response = await axios.get(`${API_URL}/vouchers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setVoucher(response.data.vouchers);
+
+    }catch (error : any) {
+      console.error('Lỗi lấy voucher:', error.response?.data || error.message);
+      Alert.alert('Lỗi', 'Không thể tải giỏ hàng');
+    }
   };
 
-  const decreaseQuantity = async (productId: number) => {
+  const increaseQuantity = async (item:any) => {
     const token = await getToken();
-    await axios.post(`${API_URL}/cart`, { productId, quantity: -1 }, {
+    const productId = item.productId;
+    const comboId = item.comboId;
+    if(productId) {
+      await axios.post(`${API_URL}/cart`, { productId, quantity: 1 }, {
       headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchCart();
+      });
+      fetchCart();
+    }
+    if(comboId) {
+      await axios.post(`${API_URL}/cart/combo`, { comboId, quantity: 1 }, {
+      headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchCart();
+    }
+  };
+
+  const decreaseQuantity = async (item:any) => {
+    if (item.quantity <= 1) {
+      Alert.alert('Xác nhận', 'Bạn muốn xóa món này khỏi giỏ hàng?', [
+        { text: 'Hủy', style: 'cancel' },
+        { text: 'Xóa', onPress: () => removeItem(item.id) },
+      ]);
+      return;
+    }
+    const token = await getToken();
+    const productId = item.productId;
+    const comboId = item.comboId;
+    if(productId) {
+      await axios.post(`${API_URL}/cart`, { productId, quantity: -1 }, {
+      headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchCart();
+    }
+    if(comboId) {
+      await axios.post(`${API_URL}/cart/combo`, { comboId, quantity: -1 }, {
+      headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchCart();
+    }
   };
 
   const removeItem = async (cartItemId: number) => {
@@ -144,7 +196,28 @@ export default function CartScreen({ navigation }: any) {
   const getSelectedTotal = () => {
     return cartItems
       .filter(item => selectedItems.includes(item.id))
-      .reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+      .reduce((sum, item) => item.product === null ? sum + item.quantity * item.combo.priceSale : sum + item.quantity * item.product.price, 0);
+  };
+
+  //hàm tính giảm giá
+  const getDiscountAmount = () => {
+    if (!selectedVoucher) return 0;
+
+    const total = getSelectedTotal();
+
+    // Đảm bảo không giảm âm (nếu voucher > tổng tiền)
+    if (selectedVoucher.discount > total) {
+      // Đảm bảo không giảm âm (nếu voucher > tổng tiền)
+      return total;
+    }
+
+    console.log(selectedVoucher);
+
+    return selectedVoucher.discount;
+  };
+
+  const getFinalTotal = () => {
+    return getSelectedTotal() - getDiscountAmount();
   };
 
   const validateForm = () => {
@@ -153,6 +226,24 @@ export default function CartScreen({ navigation }: any) {
     if (!receiverAddress.trim()) return 'Vui lòng nhập địa chỉ giao hàng';
     if (!/^\d{9,11}$/.test(receiverPhone.replace(/\D/g, ''))) return 'Số điện thoại không hợp lệ';
     return null;
+  };
+
+  const deleteVoucher = async (voucherId:any) => {
+    try{
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        navigation.navigate('Login');
+        return;
+      }
+      const res = await axios.delete(`${API_URL}/vouchers/+${voucherId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      return res;
+    }catch(error:any){
+      console.log('errol: ',error);
+    }
   };
 
   const checkout = async () => {
@@ -178,9 +269,8 @@ export default function CartScreen({ navigation }: any) {
 
     try {
       const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
-      const total = getSelectedTotal();
+      const total = getFinalTotal();
 
-      // ĐÚNG 100% với backend của bạn
       const orderRes = await axios.post(
         `${API_URL}/orders`,
         {
@@ -200,15 +290,28 @@ export default function CartScreen({ navigation }: any) {
 
       // Tạo các order items
       for (const item of selectedCartItems) {
-        await axios.post(
-          `${API_URL}/orderitems/orderId/${orderId}`,
-          {
-            productId: item.product.id,
-            quantity: item.quantity,
-            price: item.product.price,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        if(item.productId){
+          await axios.post(
+            `${API_URL}/orderitems/orderId/${orderId}`,
+            {
+              productId: item.product.id,
+              quantity: item.quantity,
+              price: item.product.price,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+        else {
+          await axios.post(
+            `${API_URL}/orderitems/orderId/${orderId}`,
+            {
+              comboId: item.comboId,
+              quantity: item.quantity,
+              price: item.combo.priceSale,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
       }
 
       // Xóa giỏ hàng đã chọn
@@ -248,6 +351,7 @@ export default function CartScreen({ navigation }: any) {
 
   useEffect(() => {
     fetchCart();
+    fetchVoucher();
   }, []);
 
   if (loading) {
@@ -273,12 +377,12 @@ export default function CartScreen({ navigation }: any) {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <CartItemComponent
-                image={item.product.image}
-                name={item.product.name}
-                price={item.product.price}
+                image={item.product === null ? item.combo.image : item.product.image}
+                name={item.product === null ? item.combo.name : item.product.name}
+                price={item.product === null ? item.combo.priceSale : item.product.price}
                 quantity={item.quantity}
-                onIncrease={() => increaseQuantity(item.product.id)}
-                onDecrease={() => decreaseQuantity(item.product.id)}
+                onIncrease={() => increaseQuantity(item)}
+                onDecrease={() => decreaseQuantity(item)}
                 onRemove={() => removeItem(item.id)}
                 isSelected={selectedItems.includes(item.id)}
                 onToggleSelect={() => toggleSelect(item.id)}
@@ -287,18 +391,116 @@ export default function CartScreen({ navigation }: any) {
           />
 
           <View style={styles.footer}>
+            <View style={styles.voucherContainer}>
+              <TouchableOpacity
+                style={styles.voucherButton}
+                onPress={() => {
+                  if (voucher.length === 0) {
+                    Alert.alert('Thông báo', 'Bạn chưa có voucher nào khả dụng');
+                    return;
+                  }
+                  setVoucherModalVisible(true);
+                }}
+              >
+            <View style={styles.voucherButtonContent}>
+              <Text style={styles.voucherIcon}>Voucher</Text>
+              <Text style={styles.voucherButtonText} numberOfLines={1}>
+                {selectedVoucher 
+                  ? `${selectedVoucher.name}`
+                  : 'Chọn mã giảm giá'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* MODAL CHỌN VOUCHER*/}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={voucherModalVisible}
+            onRequestClose={() => setVoucherModalVisible(false)}
+          >
+            <View style={styles.modalOverlayv}>
+              
+
+            <View style={styles.voucherModal}>
+              {/* Header */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Chọn mã giảm giá</Text>
+                <TouchableOpacity onPress={() => setVoucherModalVisible(false)}>
+                  <Text style={styles.closeBtn}>Close</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Danh sách voucher */}
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Option: Không dùng voucher */}
+                <TouchableOpacity
+                  style={styles.voucherOption}
+                  onPress={() => {
+                    setSelectedVoucher(null);
+                    setVoucherModalVisible(false);
+                  }}
+                >
+                  <View style={styles.radioOuter}>
+                    {!selectedVoucher && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={{fontSize:16,fontWeight:'bold'}}>Không sử dụng voucher</Text>
+                </TouchableOpacity>
+
+                {/* Danh sách voucher */}
+                {voucher.map((v: any) => (
+                  <TouchableOpacity
+                    key={v.id}
+                    style={styles.voucherOption}
+                    onPress={() => {
+                      setSelectedVoucher(v);
+                      setVoucherModalVisible(false);
+                    }}
+                  >
+                    <View style={styles.radioOuter}>
+                      {selectedVoucher?.id === v.id && <View style={styles.radioInner} />}
+                    </View>
+                    <View style={styles.voucherInfo}>
+                      <Text style={styles.voucherName}>{v.name}</Text>
+                      <Text style={styles.voucherDiscount}>
+                        Giảm: {v.discount?.toLocaleString()}₫
+                      </Text>
+                      {v.description && (
+                        <Text style={styles.voucherDesc}>{v.description}</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+            {selectedVoucher && (
+              <View style={{}}>
+                <Text style={{fontSize:20,marginBottom:10,fontWeight:'bold'}}>Chi tiết giá</Text>
+                <Text style={{marginBottom:5, fontSize:16}}>Giá ban đầu: {getSelectedTotal()} đ</Text>
+                <View style={{flexDirection:'row'}}>
+                  <Text style={{fontSize:16}}>Giảm giá: </Text>
+                  <Text style={{color:'green', fontWeight:'bold',fontSize:16}}>{getDiscountAmount()} ₫</Text>
+                </View>
+              </View>
+            )}
+            </View>
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>
                 Tổng tiền ({selectedItems.length} sản phẩm):
               </Text>
-              <Text style={styles.totalValue}>{getSelectedTotal().toLocaleString()} ₫</Text>
+              <Text style={styles.totalValue}>{getFinalTotal().toLocaleString()} ₫</Text>
             </View>
             <TouchableOpacity
               style={[
                 styles.checkoutButton,
                 selectedItems.length === 0 && { backgroundColor: '#ccc' },
               ]}
-              onPress={checkout}
+              onPress={()=>{
+                checkout();
+                deleteVoucher(selectedVoucher.id);
+              }}
               disabled={selectedItems.length === 0}
             >
               <Text style={styles.checkoutText}>Thanh toán</Text>
@@ -350,7 +552,6 @@ export default function CartScreen({ navigation }: any) {
                   multiline
                 />
               </ScrollView>
-
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
@@ -416,6 +617,119 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: '600', color: '#2A4BA0' },
   checkoutButton: { backgroundColor: '#2A4BA0', padding: 16, borderRadius: 16, alignItems: 'center' },
   checkoutText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  voucherContainer: {
+    marginBottom: 15,
+    paddingHorizontal: 5,
+  },
+    voucherButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF9E6',
+    borderWidth: 1.5,
+    borderColor: '#FFB800',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+  },
+  voucherButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  voucherIcon: {
+    backgroundColor: '#FFB800',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  voucherButtonText: {
+    fontSize: 15.5,
+    fontWeight: '600',
+    color: '#D35400',
+    flex: 1,
+  },
+  voucherArrow: {
+    fontSize: 20,
+    color: '#D35400',
+  },
+
+  // Modal voucher
+  modalOverlayv: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  voucherModal: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 30,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitlev: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A2530',
+  },
+  closeBtn: {
+    fontSize: 24,
+    color: '#999',
+  },
+  voucherOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  radioOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#2A4BA0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#2A4BA0',
+  },
+  voucherInfo: {
+    flex: 1,
+  },
+  voucherName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A2530',
+  },
+  voucherDiscount: {
+    fontSize: 15,
+    color: '#E74C3C',
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  voucherDesc: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 4,
+  },
 
   // Modal styles
   modalOverlay: {

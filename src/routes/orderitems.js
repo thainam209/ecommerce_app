@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 //api tạo orderitem theo orderId
 router.post('/orderId/:orderId', async (req, res) => {
   const { orderId } = req.params;
-  const { productId, quantity, price } = req.body;
+  const { productId, comboId, quantity, price } = req.body;
   if (!req.user?.id) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -20,11 +20,28 @@ router.post('/orderId/:orderId', async (req, res) => {
       return res.status(404).json({ error: 'Order không tồn tại' });
     }
     // Tạo order item
+    // if(productId){
+    //   const orderItem = await OrderItem.create({
+    //     orderId,
+    //     productId,
+    //     quantity,
+    //     price,
+    //   });
+    // }
+    // else {
+    //   const orderItem = await OrderItem.create({
+    //     orderId,
+    //     quantity,
+    //     price,
+    //     comboId
+    //   });
+    // }
     const orderItem = await OrderItem.create({
       orderId,
       productId,
       quantity,
-      price
+      price,
+      comboId
     });
 
     res.json({
@@ -35,7 +52,8 @@ router.post('/orderId/:orderId', async (req, res) => {
         orderId: orderItem.orderId,
         productId: orderItem.productId,
         quantity: orderItem.quantity,
-        price: orderItem.price
+        price: orderItem.price,
+        comboId: orderItem.comboId
       }
     });
   } catch (error) {

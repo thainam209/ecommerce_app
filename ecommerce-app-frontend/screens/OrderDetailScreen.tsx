@@ -25,7 +25,7 @@ const Orderitem = ({ image, name, price, quantity }: any) => {
           <View style={{ flexDirection: 'row', marginTop: 10 }}>
             <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Giá:</Text>
             <Text style={{ fontWeight: 'bold', fontSize: 16, color: 'green' }}>
-              {price.toLocaleString()} ₫
+              {price} ₫
             </Text>
           </View>
           <Text style={{ fontWeight: 'bold', fontSize: 16, marginTop: 10 }}>
@@ -40,6 +40,7 @@ const Orderitem = ({ image, name, price, quantity }: any) => {
 export default function OrderDetailScreen({ navigation, route }: any) {
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [combo, setCombo] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false); // Modal xác nhận hủy
 
   const status = route.params.status;
@@ -54,25 +55,97 @@ export default function OrderDetailScreen({ navigation, route }: any) {
     }
   };
 
+  // const fetchOrderItems = async () => {
+  //   try {
+  //     const token = await getToken();
+  //     const response = await axios.post(
+  //       `${API_URL}/orderitems/orderId`,
+  //       { orderId },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setOrderItems(response.data.items);
+
+  //     response.data.items.map(async(item: any) => {
+  //       console.log(item);
+        
+  //       if(item.productId){
+  //         const producttest = await axios.get(`${API_URL}/products/${item.productid}`);
+  //         setProducts(prev => [...prev, producttest])
+  //         console.log("product",producttest);
+  //       }
+  //       else if(item.comboId){
+  //         const combotest = await axios.get(`${API_URL}/combos/${item.comboid}`);
+  //         setProducts(prev => [...prev, combotest])
+  //         console.log("combo",combotest);
+  //       }
+  //     })
+
+  //     // const productIds = response.data.items.map((item: any) => item.productId);
+  //     // const comboIds = response.data.items.map((item: any) => item.comboId);
+  //     // if (productIds.length > 0 && productIds.item !=null) {
+  //     //   const productRequests = productIds.map((productid: any) =>
+  //     //     axios.get(`${API_URL}/products/${productid}`)
+  //     //   );
+  //     //   const productResponses = await Promise.all(productRequests);
+  //     //   const productDetails = productResponses.map(res => res.data);
+  //     //   setProducts(productDetails);
+  //     // }
+
+  //     // if (comboIds.length > 0 && comboIds.item !=null) {
+  //     //   const comboRequests = comboIds.map((comboid: any) =>
+  //     //     axios.get(`${API_URL}/combos/${comboid}`)
+  //     //   );
+  //     //   const comboResponses = await Promise.all(comboRequests);
+  //     //   const comboDetails = comboResponses.map(res => res.data);
+  //     //   setCombo(comboDetails);
+  //     // }
+  //   } catch (error) {
+  //     console.error('Error fetching order items:', error);
+  //   }
+  // };
   const fetchOrderItems = async () => {
     try {
       const token = await getToken();
-      const response = await axios.post(
+
+      // 1. Lấy order items
+      const { data } = await axios.post(
         `${API_URL}/orderitems/orderId`,
         { orderId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setOrderItems(response.data.items);
 
-      const productIds = response.data.items.map((item: any) => item.productId);
-      if (productIds.length > 0) {
-        const productRequests = productIds.map((id: any) =>
-          axios.get(`${API_URL}/products/${id}`)
+      setOrderItems(data.items);
+
+      console.log(data.items);
+
+      // 2. Song song fetch tất cả product + combo
+      const productPromises = data.items
+        .filter((item: any) => item.productId)
+        .map((item: any) =>
+          axios.get(`${API_URL}/products/${item.productId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
         );
-        const productResponses = await Promise.all(productRequests);
-        const productDetails = productResponses.map(res => res.data);
-        setProducts(productDetails);
-      }
+
+      const comboPromises = data.items
+        .filter((item: any) => item.comboId)
+        .map((item: any) =>
+          axios.get(`${API_URL}/combos/${item.comboId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        );
+
+      const [productResponses, comboResponses] = await Promise.all([
+        Promise.all(productPromises),
+        Promise.all(comboPromises),
+      ]);
+
+      setProducts(productResponses.map(r => r.data));
+      setCombo(comboResponses.map(r => r.data));
+
+      console.log(orderItems);
+      console.log('combo: ', combo);
+
     } catch (error) {
       console.error('Error fetching order items:', error);
     }
@@ -135,7 +208,62 @@ export default function OrderDetailScreen({ navigation, route }: any) {
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {products.map((p, index) => (
+        {orderItems.map((item, index) => {
+          // Trường hợp là sản phẩm đơn lẻ (có productId)
+          if (item.productId) {
+            const product = products.find(p => p.id === item.productId);
+            
+            if (!product) {
+              return (
+                <View key={`missing-product-${index}`} style={styles.containerProduct}>
+                  <Text style={{ padding: 20, color: '#999', textAlign: 'center' }}>
+                    Sản phẩm đã bị xóa khỏi hệ thống
+                  </Text>
+                </View>
+              );
+            }
+
+            return (
+              <Orderitem
+                key={`product-${item.productId}`}
+                image={{ uri: product.image }}
+                name={product.name}
+                price={item.price}
+                quantity={item.quantity}
+              />
+            );
+          }
+
+          // Trường hợp là combo (có comboId, productId = null)
+          // console.log(combo);
+          if (item.comboId) {
+            const comboItem = combo.find(c => c.id === item.comboId);
+
+            if (!comboItem) {
+              return (
+                <View key={`missing-combo-${index}`} style={styles.containerProduct}>
+                  <Text style={{ padding: 20, color: '#999', textAlign: 'center' }}>
+                    Combo đã bị xóa khỏi hệ thống
+                  </Text>
+                </View>
+              );
+            }
+
+            return (
+              <Orderitem
+                key={`combo-${item.comboId}`}
+                image={{ uri: comboItem.image}}
+                name={comboItem.name}
+                price={comboItem.priceSale}
+                quantity={item.quantity}
+              />
+            );
+          }
+
+          // Trường hợp lỗi dữ liệu (cả hai đều null)
+          return null;
+        })}
+        {/* {products.map((p, index) => (
           <Orderitem
             key={p.id}
             image={{ uri: p.image }}
@@ -143,7 +271,7 @@ export default function OrderDetailScreen({ navigation, route }: any) {
             price={orderItems[index].price}
             quantity={orderItems[index].quantity}
           />
-        ))}
+        ))} */}
 
         {/* Nút Hủy đơn hàng */}
         <View style={{ marginTop: 40, alignItems: 'center' }}>

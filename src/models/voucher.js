@@ -3,7 +3,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Voucher extends Model {
     static associate(models) {
-      // ví dụ: Voucher.belongsTo(models.User, { foreignKey: 'userId' });
+      // một user sẽ có nhiều voucher
+      Voucher.belongsTo(models.User, {
+        foreignKey: 'userId', 
+        as: 'user'
+      });
     }
   }
   Voucher.init({
@@ -13,12 +17,23 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER
     },
-    code: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
     },
-    discount: DataTypes.INTEGER,
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'userId',
+      references: {
+        model: 'User',
+        key: 'id'
+      }
+    },
+    discount:{
+      allowNull: false,
+      type: DataTypes.INTEGER
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE

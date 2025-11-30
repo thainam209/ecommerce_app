@@ -45,6 +45,8 @@ const cateRoutes = require('./routes/cate');
 const orderItemRoutes = require('./routes/orderitems');
 const chatRoutes = require('./routes/chat');
 const infouserRoutes = require('./routes/infouser');
+const voucherRoutes = require('./routes/vouchers');
+const comboRoutes = require('./routes/combo');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -54,5 +56,7 @@ app.use('/api/categories', cateRoutes);
 app.use('/api/orderitems', authenticate, orderItemRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/infouser', authenticate, infouserRoutes);
+app.use('/api/vouchers', authenticate , voucherRoutes);
+app.use('/api/combos', comboRoutes);
 
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));

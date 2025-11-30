@@ -216,12 +216,14 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
             {isLoadingCategories && categories.length === 0 ? (
               <ActivityIndicator size="small" color="#153075" style={{ margin: 20 }} />
             ) : (
+              /*Nếu category = combo thì tới trang combo */
               categories.map((c, idx) => (
                 <Cate
                   key={c.id ?? idx}
                   name={c.name}
                   description={c.description ?? ''}
-                  onPress={() => navigation.navigate('ProductScreen', { categoryId: c.id, categoryName: c.name })}
+                  onPress={() => navigation.navigate(c.name ==='Combo' ?
+                  'ComboScreen':'ProductScreen', { categoryId: c.id, categoryName: c.name })}
                 />
               ))
             )}

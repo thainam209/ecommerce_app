@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'productId',
         as: 'product'
       });
+
+      CartItem.belongsTo(models.Combo, {
+        foreignKey: 'comboId',
+        as: 'combo'
+      });
     }
   }
   CartItem.init({
@@ -39,6 +44,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
+    },
+    comboId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Combo',
+        key: 'id'
+      },
     },
     quantity: DataTypes.INTEGER,
     createdAt: {

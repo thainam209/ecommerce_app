@@ -11,6 +11,8 @@ import OrdersScreen from './screens/OrdersScreen';
 import ChatScreen from './screens/ChatScreen';
 import UserScreen from './screens/UserScreen';
 import OrderDetailScreen from './screens/OrderDetailScreen';
+import ComboScreen from './screens/ComboScreen';
+import ComboScreenDetail from './screens/ComboScreenDetail'
 
 const Stack = createStackNavigator();
 
@@ -28,6 +30,9 @@ export default function App() {
         <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="UserScreen" component={UserScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="OrderDetailScreen" component={OrderDetailScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="ComboScreen" component={ComboScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="ComboScreenDetail" component={ComboScreenDetail} options={{ headerShown: false }}/>
+        
       </Stack.Navigator>
     </NavigationContainer>
   );

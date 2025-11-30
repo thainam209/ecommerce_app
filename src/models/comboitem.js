@@ -51,6 +51,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE
     },
+    productName: {
+      type: DataTypes.STRING
+    }
   }, {
     sequelize,
     modelName: 'ComboItem',

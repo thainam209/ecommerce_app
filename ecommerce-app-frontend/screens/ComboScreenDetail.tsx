@@ -15,9 +15,18 @@ import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import API_URL from '../config/api';
 
+const ComboItem = ({ name }:any) => {
+    return (
+    <View style={{marginTop:10}}>
+      <Text style={{color:'orange',fontWeight:'bold',fontSize:16}}>{name}</Text>
+    </View>
+  );
+};
+
 export default function ProductDetailScreen({ navigation, route }: any) {
-  const { productId } = route.params;
-  const [product, setProduct] = useState<any>(null);
+  const { comboId, name, price, priceSale, image } = route.params;
+  const [combo, setCombo] = useState<any>(null);
+  const [comboItem, setComboItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
@@ -31,13 +40,15 @@ export default function ProductDetailScreen({ navigation, route }: any) {
     }
   };
 
-  const getProductDetail = useCallback(async (id: any) => {
+  const getComboItem = useCallback(async (id: any) => {
     try {
-      const response = await axios.get(`${API_URL}/products/${id}`);
-      setProduct(response.data);
+      console.log('comboId',comboId);
+      const response = await axios.get(`${API_URL}/combos/comboitems/${id}`);
+      setComboItem(response.data);
+      console.log(response.data);
     } catch (error) {
-      console.error('Error fetching product detail:', error);
-      Alert.alert('Lỗi', 'Không thể tải thông tin sản phẩm');
+      console.error('Error fetching combo detail:', error);
+      Alert.alert('Lỗi', 'Không thể tải thông tin combo');
     } finally {
       setLoading(false);
     }
@@ -54,10 +65,11 @@ export default function ProductDetailScreen({ navigation, route }: any) {
     }
 
     try {
+      console.log(comboId);
       await axios.post(
-        `${API_URL}/cart`,
+        `${API_URL}/cart/combo`,
         {
-          productId: product.id,
+          comboId: comboId,
           quantity: quantity,
         },
         {
@@ -70,7 +82,7 @@ export default function ProductDetailScreen({ navigation, route }: any) {
       setModalVisible(false);
       setQuantity(1);
 
-      Alert.alert('Thành công!', `${quantity} sản phẩm đã được thêm vào giỏ hàng`, [
+      Alert.alert('Thành công!', `${quantity} combo đã được thêm vào giỏ hàng`, [
         { text: 'Tiếp tục mua', onPress: () => navigation.goBack() },
         { text: 'Xem giỏ hàng', onPress: () => navigation.navigate('CartScreen') },
       ]);
@@ -94,7 +106,7 @@ export default function ProductDetailScreen({ navigation, route }: any) {
       await axios.post(
         `${API_URL}/cart`,
         {
-          productId: product.id,
+          comboId: comboId,
           quantity: quantity,
         },
         {
@@ -117,37 +129,30 @@ export default function ProductDetailScreen({ navigation, route }: any) {
   };
 
   useEffect(() => {
-    getProductDetail(productId);
-  }, [getProductDetail, productId]);
+    getComboItem(comboId);
+  }, [getComboItem, comboId]);
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#2A4BA0" />
-        <Text>Loading product details...</Text>
+        <Text>Loading combo item...</Text>
       </View>
     );
   }
 
-  if (!product) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Product not found.</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{product.name}</Text>
+        <Text style={styles.headerTitle}>{name}</Text>
       </View>
 
       <View style={styles.imagePlaceholder}>
         <Image
           source={
-            product.image
-              ? { uri: `${product.image}` }
+            image
+              ? { uri: `${image}` }
               : require('../assets/icon_image.png')
           }
           style={styles.productImage}
@@ -156,15 +161,22 @@ export default function ProductDetailScreen({ navigation, route }: any) {
       </View>
 
       <ScrollView style={styles.content}>
-        <Text style={styles.productName}>{product.name}</Text>
-        <Text style={styles.productPrice}>{product.price.toLocaleString()} ₫</Text>
-
+        <Text style={styles.productName}>{name}</Text>
+        <Text style={{color:'gray',marginTop:8,fontSize:18,textDecorationLine:'line-through'}}>{price.toLocaleString()} vn₫</Text>
+        <Text style={styles.productPrice}>{priceSale.toLocaleString()} vn₫</Text>
+        
         <TouchableOpacity style={styles.section}>
           <Text style={styles.sectionTitle}>Details</Text>
         </TouchableOpacity>
-        <Text style={styles.sectionContent}>
-          {product.description ? product.description.replace(/<[^>]+>/g, '') : 'No details.'}
-        </Text>
+
+        {comboItem.map((c:any) => (
+          <ComboItem
+            key={c.id}
+            name={c.productName}
+          />
+        ))}
+        
+        
       </ScrollView>
 
       <View style={styles.buttonContainer}>
@@ -194,7 +206,7 @@ export default function ProductDetailScreen({ navigation, route }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn số lượng</Text>
-            <Text style={styles.modalProductName}>{product.name}</Text>
+            <Text style={styles.modalProductName}>{name}</Text>
 
             <View style={styles.quantityContainer}>
               <TouchableOpacity
@@ -290,7 +302,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     color: '#1A2530',
   },

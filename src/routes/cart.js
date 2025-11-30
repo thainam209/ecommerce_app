@@ -1,22 +1,66 @@
 const express = require('express');
 const router = express.Router();
-const { CartItem, Product } = require('../models');
+const { CartItem, Product, Combo } = require('../models');
 
+//api cũ(chỉ lấy được product)
+// router.get('/', async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const cartItems = await CartItem.findAll({
+//       where: { userId },
+//       include: [{
+//         model: Product,
+//         as: 'product',
+//       }],
+//       order: [['createdAt', 'DESC']]
+//     });
+
+//     const totalPrice = cartItems.reduce((sum, item) => 
+//       sum + (item.quantity * item.product.price), 0
+//     );
+
+//     res.json({
+//       items: cartItems,
+//       totalItems: cartItems.length,
+//       totalPrice
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: 'Lỗi lấy giỏ hàng' });
+//   }
+// });
+
+//api xử lý cả product và combo
 router.get('/', async (req, res) => {
   try {
     const userId = req.user.id;
+
     const cartItems = await CartItem.findAll({
       where: { userId },
-      include: [{
-        model: Product,
-        as: 'product',
-      }],
+      include: [
+        {
+          model: Product,
+          as: 'product',        
+          required: false          
+        },
+        {
+          model: Combo,
+          as: 'combo',        
+          required: false
+        }
+      ],
       order: [['createdAt', 'DESC']]
     });
 
-    const totalPrice = cartItems.reduce((sum, item) => 
-      sum + (item.quantity * item.product.price), 0
-    );
+    // Tính tổng tiền + xử lý cả Product và Combo
+    const totalPrice = cartItems.reduce((sum, item) => {
+      if (item.cartProduct) {
+        return sum + (item.quantity * item.cartProduct.price);
+      }
+      if (item.cartCombo) {
+        return sum + (item.quantity * item.cartCombo.price);
+      }
+      return sum;
+    }, 0);
 
     res.json({
       items: cartItems,
@@ -24,6 +68,7 @@ router.get('/', async (req, res) => {
       totalPrice
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Lỗi lấy giỏ hàng' });
   }
 });
@@ -58,6 +103,50 @@ router.post('/', async (req, res) => {
     // Trả về item mới nhất (có thông tin sản phẩm)
     const result = await CartItem.findByPk(cartItem.id, {
       include: [{ model: Product, as: 'product' }]
+    });
+
+    res.json({
+      message: 'Đã thêm vào giỏ hàng!',
+      item: result
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+//api thêm combo vào giỏ hàng
+router.post('/combo', async (req, res) => {
+  try {
+    const {comboId ,quantity = 1 } = req.body;
+    const userId = req.user.id;
+
+    // Kiểm tra sản phẩm tồn tại
+    const combo = await Combo.findByPk(comboId);
+    if (!combo) return res.status(404).json({ message: 'Combo không tồn tại' });
+
+    // Tìm item đã có chưa
+    let cartItem = await CartItem.findOne({
+      where: { userId, comboId }
+    });
+
+    if (cartItem) {
+      // Đã có → cộng dồn số lượng
+      cartItem.quantity += quantity;
+      await cartItem.save();
+    } else {
+      // Chưa có → tạo mới
+      cartItem = await CartItem.create({
+        userId,
+        comboId,
+        quantity
+      });
+    }
+
+    // Trả về item mới nhất (có thông tin sản phẩm)
+    const result = await CartItem.findByPk(cartItem.id, {
+      include: [{ model: Combo, as: 'combo' }]
     });
 
     res.json({
