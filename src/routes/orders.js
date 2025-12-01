@@ -1,7 +1,8 @@
 // routes/orders.js
 const express = require('express');
 const router = express.Router();
-const { Order } = require('../models');
+const { Order, User } = require('../models');
+const { where } = require('sequelize');
 
 router.get('/', async (req, res) => {
   if (!req.user?.id) {
@@ -90,6 +91,21 @@ router.put('/:orderId', async (req, res) => {
     });
   }
 });
+
+//api lấy toàn bộ đơn hàng cho admin
+router.get('/admin', async (req, res) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const admin = await User.findByPk(req.user.id);
+
+  console.log(admin.role);  
+  if(admin.role === 'admin'){
+    const fullOrders = await Order.findAll();
+    res.json(fullOrders);
+  }
+  res.json('not admin');
+}); 
 
 
 module.exports = router;

@@ -105,6 +105,7 @@ export default function CartScreen({ navigation }: any) {
       });
 
       setCartItems(response.data.items || []);
+      //console.log(response.data.items);
     } catch (error: any) {
       console.error('Lỗi lấy giỏ hàng:', error.response?.data || error.message);
       Alert.alert('Lỗi', 'Không thể tải giỏ hàng');
@@ -270,6 +271,8 @@ export default function CartScreen({ navigation }: any) {
     try {
       const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
       const total = getFinalTotal();
+
+      console.log(selectedCartItems);
 
       const orderRes = await axios.post(
         `${API_URL}/orders`,
@@ -473,18 +476,24 @@ export default function CartScreen({ navigation }: any) {
                 ))}
               </ScrollView>
             </View>
-          </View>
-        </Modal>
-            {selectedVoucher && (
-              <View style={{}}>
-                <Text style={{fontSize:20,marginBottom:10,fontWeight:'bold'}}>Chi tiết giá</Text>
-                <Text style={{marginBottom:5, fontSize:16}}>Giá ban đầu: {getSelectedTotal()} đ</Text>
-                <View style={{flexDirection:'row'}}>
-                  <Text style={{fontSize:16}}>Giảm giá: </Text>
-                  <Text style={{color:'green', fontWeight:'bold',fontSize:16}}>{getDiscountAmount()} ₫</Text>
+            </View>
+          </Modal>
+            {selectedVoucher ? (
+              <View style={{ marginBottom: 10 }}>
+                <Text style={{ fontSize: 20, marginBottom: 10, fontWeight: 'bold' }}>
+                  Chi tiết giá
+                </Text>
+                <Text style={{ marginBottom: 5, fontSize: 16 }}>
+                  Giá ban đầu: {getSelectedTotal().toLocaleString()} ₫
+                </Text>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ fontSize: 16 }}>Giảm giá: </Text>
+                  <Text style={{ color: 'green', fontWeight: 'bold', fontSize: 16 }}>
+                    -{getDiscountAmount().toLocaleString()} ₫
+                  </Text>
                 </View>
               </View>
-            )}
+            ) : null}
             </View>
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>
@@ -499,7 +508,6 @@ export default function CartScreen({ navigation }: any) {
               ]}
               onPress={()=>{
                 checkout();
-                deleteVoucher(selectedVoucher.id);
               }}
               disabled={selectedItems.length === 0}
             >
@@ -561,7 +569,14 @@ export default function CartScreen({ navigation }: any) {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalBtn, { backgroundColor: '#2A4BA0' }]}
-                  onPress={confirmCheckout}
+                  onPress={() => {
+                    // Nếu không dùng voucher (selectedVoucher = null) → chỉ thanh toán bình thường
+                    // Nếu có dùng voucher → thanh toán + xóa voucher đó đi (voucher dùng 1 lần)
+                    confirmCheckout();
+                    if (selectedVoucher?.id) {
+                      deleteVoucher(selectedVoucher.id);
+                    }
+                  }}
                 >
                   <Text style={[styles.modalBtnText, { color: '#fff' }]}>Xác nhận thanh toán</Text>
                 </TouchableOpacity>

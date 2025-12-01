@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView,
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import API_URL from '../config/api';
+import LoginScreen from './LoginScreen';
 
 export default function UserScreen({ navigation }: { navigation: any }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -40,6 +41,34 @@ export default function UserScreen({ navigation }: { navigation: any }) {
     {
       console.log('Lỗi lấy thông tin user:', error);
     }
+  };
+  const handleLogout = async () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc muốn đăng xuất khỏi tài khoản?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Đăng xuất',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Xóa token khỏi SecureStore
+              await SecureStore.deleteItemAsync('token');
+              
+              // Điều hướng về Login và xóa toàn bộ stack (người dùng không bấm Back lại được)
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'LoginScreen' }],
+              });
+            } catch (error) {
+              console.error('Lỗi đăng xuất:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   useEffect(() => {
@@ -93,6 +122,15 @@ export default function UserScreen({ navigation }: { navigation: any }) {
           }}
         >
           <Text style={styles.saveButtonText}>Xem các đơn hàng của bạn</Text>
+        </TouchableOpacity>
+        <View style={{justifyContent:'center',alignContent:'center',marginLeft:'33%'}}>
+        </View>
+        {/* NÚT ĐĂNG XUẤT - ĐẸP VÀ CHUẨN */}
+        <TouchableOpacity
+          style={{width:150,height:60,borderRadius:16,backgroundColor:'red',alignItems: 'center',paddingTop:20,marginLeft:"33%"}}
+          onPress={handleLogout}
+        >
+          <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}>Đăng xuất</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
