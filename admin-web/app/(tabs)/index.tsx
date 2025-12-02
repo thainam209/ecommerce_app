@@ -1,98 +1,198 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+// app/(tabs)/index.tsx
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import API_BASE_URL from "../../config/api";
+import { useRouter } from "expo-router";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { BackToDashboardButton } from "@/components/BackToDashboardButton";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function AdminLoginScreen() {
+  const colorScheme = useColorScheme() ?? "light";
+  const theme = Colors[colorScheme];
 
-export default function HomeScreen() {
+  const router = useRouter();
+
+  // 🔥 dùng hook auth, KHÔNG tự redirect ở màn login
+  const { loading: authLoading, isAdmin, user, login, logout } =
+    useAdminAuth({ redirectToLogin: false });
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  // Nếu đã login admin rồi thì đưa thẳng sang dashboard
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      router.replace("/(tabs)/dashboard/dashboard");
+    }
+  }, [authLoading, isAdmin, router]);
+
+  async function handleLogin() {
+    if (!email.trim() || !password) {
+      Alert.alert("Lỗi", "Nhập đầy đủ email và mật khẩu");
+      return;
+    }
+
+    try {
+      setLoggingIn(true);
+
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Lỗi", json.error || "Sai tài khoản hoặc mật khẩu");
+        return;
+      }
+
+      if (json.user.role !== "admin") {
+        Alert.alert("Lỗi", "Tài khoản này không phải admin!");
+        return;
+      }
+
+      // 🔥 cập nhật hook auth
+      await login(json.token, json.user);
+
+      setPassword("");
+      Alert.alert("Thành công", "Đăng nhập admin thành công!");
+
+      router.replace("/(tabs)/dashboard/dashboard");
+    } catch (err) {
+      Alert.alert("Lỗi", "Không kết nối được server");
+    } finally {
+      setLoggingIn(false);
+    }
+  }
+
+  async function handleLogout() {
+    await logout(); // hook sẽ clear token và replace về / (tabs)
+  }
+
+  if (authLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator />
+        <Text style={{ marginTop: 8, color: "#999" }}>
+          Đang kiểm tra phiên đăng nhập...
+        </Text>
+      </View>
+    );
+  }
+
+  const loggedIn = isAdmin && !!user;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      <View style={styles.container}>
+        <Text style={styles.title}>Admin Account</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {!loggedIn ? (
+          // Form login như cũ
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Đăng nhập Admin</Text>
+
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="admin@example.com"
+              value={email}
+              onChangeText={setEmail}
+            />
+
+            <Text style={styles.label}>Mật khẩu</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="•••••••"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={loggingIn}
+            >
+              {loggingIn ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Đăng Nhập</Text>
+              )}
+            </TouchableOpacity>
+
+            <Text style={{ marginTop: 10, color: "#777", fontSize: 12 }}>
+              * Chỉ tài khoản có role = admin mới đăng nhập được.
+            </Text>
+          </View>
+        ) : (
+          // Thông tin admin + nút logout
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Thông tin Admin</Text>
+
+            <Text style={styles.info}>ID: {user!.id}</Text>
+            <Text style={styles.info}>Username: {user!.username}</Text>
+            <Text style={styles.info}>Email: {user!.email}</Text>
+            <Text style={styles.info}>Role: {user!.role}</Text>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#ef4444", marginTop: 16 }]}
+              onPress={handleLogout}
+            >
+              <Text style={styles.buttonText}>Đăng Xuất</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 22, fontWeight: "700", marginBottom: 12 },
+  card: {
+    padding: 16,
+    backgroundColor: "#111827",
+    borderRadius: 12,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  cardTitle: { fontSize: 18, fontWeight: "700", color: "#fff", marginBottom: 12 },
+  label: { marginTop: 8, color: "#ccc", fontSize: 13 },
+  input: {
+    backgroundColor: "#1f2937",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 4,
+    color: "#fff",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  button: {
+    backgroundColor: "#4f46e5",
+    paddingVertical: 10,
+    borderRadius: 999,
+    marginTop: 16,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  info: {
+    color: "#eee",
+    marginTop: 6,
+    fontSize: 14,
   },
 });

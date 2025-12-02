@@ -162,11 +162,14 @@ export default function OrderDetailScreen({ navigation, route }: any) {
 
     try {
       const token = await getToken();
-      const response = await axios.put(
-        `${API_URL}/orders/${orderId}`,
+      const response = await axios.post(
+        `${API_URL}/orders/${orderId}/cancel`,
         {}, 
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 

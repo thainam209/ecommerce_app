@@ -1,0 +1,29 @@
+{
+  "development": {
+    "username": "appuser",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "beodai-sqlserver.database.windows.net",
+    "dialect": "mssql",
+    "dialectOptions": {
+      "options": {
+        "encrypt": true,
+        "trustServerCertificate": true
+      }
+    }
+  },
+  "test": {
+    "username": "appuser",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "beodai-sqlserver.database.windows.net",
+    "dialect": "mssql"
+  },
+  "production": {
+    "username": "appuser",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "beodai-sqlserver.database.windows.net",
+    "dialect": "mssql"
+  }
+}
