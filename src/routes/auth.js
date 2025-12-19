@@ -16,16 +16,24 @@ router.post('/register', async (req, res) => {
 
 // Đăng nhập
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, apikey } = req.body;
   const user = await User.findOne({ where: { email } });
-  console.log(password);
+  if (!apikey || apikey !== process.env.API_KEY) { // Hardcode ở .env, nhưng demo leakage bằng cách log hoặc expose
+    return res.status(401).json({ error: 'Invalid API key' + apikey});
+  }
+  //console.log(password);
   if (!user || !await bcrypt.compare(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   // Tạo JWT sau khi xác thực thành công dùng để ủy quyền người dùng
   // Token được lưu ở phía client (frontend) và gửi kèm trong header Authorization của các request sau này
   const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.json({ token });
+  //giả sử demo lộ key qua log
+  console.log(`Apikey: ${apikey}`);
+  //hoặc có thể demo lộ api key khi vô tình expose trong response
+  //res.json({ token, apikey });
+  //res.json({ token });
+  res.json("Login successful");
 });
 
 
