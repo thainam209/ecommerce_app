@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const targetUrl = 'http://192.168.21.104:3000/api/auth/login';
+const targetUrl = 'http://192.168.10.3:3000/api/auth/login';
 const email = 'nam209@gmail.com';
 const apikey = 'secretapikey123'; // Hardcode để demo leakage
 const passwords = ['password', '1234568', 'admin', 'weakpassword', 'letmein', '123456']; // Danh sách thử
