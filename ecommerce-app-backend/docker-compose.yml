@@ -1,0 +1,62 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Caothanhdai1804@"
+      MSSQL_PID: "Developer"
+    ports:
+      - "14330:1433"
+    networks: [appnet]
+    volumes:
+      - mssql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"Caothanhdai1804@\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api
+    env_file:
+      - .env.docker
+    environment:
+      DB_HOST: mssql
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: Caothanhdai1804@
+      DB_NAME: ecommerce
+      API_KEY: secretapikey123
+    depends_on:
+      mssql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks: [appnet]
+
+  kong:
+    image: kong:3.6
+    container_name: kong
+    depends_on:
+      - api
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    networks: [appnet]
+
+networks:
+  appnet: {}
+
+volumes:
+  mssql_data: {}

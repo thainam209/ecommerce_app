@@ -1,0 +1,29 @@
+{
+  "development": {
+    "username": "sa",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "mssql",
+    "dialect": "mssql",
+    "dialectOptions": {
+      "options": {
+        "encrypt": true,
+        "trustServerCertificate": true
+      }
+    }
+  },
+  "test": {
+    "username": "sa",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "mssql",
+    "dialect": "mssql"
+  },
+  "production": {
+    "username": "sa",
+    "password": "Caothanhdai1804@",
+    "database": "ecommerce",
+    "host": "mssql",
+    "dialect": "mssql"
+  }
+}

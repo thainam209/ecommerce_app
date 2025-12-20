@@ -1,0 +1,26 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: ecommerce-api
+    url: http://api:3000
+    routes:
+      - name: auth-login
+        paths:
+          - /api/auth/login
+        methods:
+          - POST
+        strip_path: false
+        plugins:
+          - name: rate-limiting
+            route: auth-login
+            config:
+              policy: local
+              limit_by: ip
+              minute: 10
+              fault_tolerant: true
+              hide_client_headers: false
+      - name: api-general
+        paths:
+          - /api
+        strip_path: false

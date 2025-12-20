@@ -1,0 +1,21 @@
+B1: Tạo Dockerfile và .dockerignore cho backend (ở root backend)(tạo ở vscode cho tiện, đặt tên file y hệt như vậy)
+- Dockerfile:
+FROM node:18-alpine
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY . .
+EXPOSE 3000
+CMD ["node", "src/index.js"]
+- .dockerignore:
+node_modules
+.env
+.git
+B2: Tải docker desktop và wsl
+- vào powershell chạy lệnh: wsl.exe --install để tải wsl (nên tải trước vì bắt restart để hoạt ddộng)
+- lên gg tải docker desktop (xong thì khởi động xem n chạy được chưa, để ý góc dưới bên trái có chữ "Engine running là ok)
+B3: vào vscode cd đến folder backend nơi có chứa Dockerfile và .dockerignore
+- chạy lệnh: "docker build -t ecommerce-api ." (ví dụ đường dẫn của t là: PS E:\baomatweb\ecommerce-app-backend> docker build -t ecommerce-api .)
+- xong thì chạy tiếp lệnh: "docker run --env-file .env -p 3000:3000 --name ecommerce-api --rm ecommerce-api"
