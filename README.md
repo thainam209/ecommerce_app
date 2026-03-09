@@ -19,3 +19,8 @@
 ![Hinh anh 07](picture/listorder.jpg)
 ### Ảnh màn hình chi tiết đơn hàng
 ![Hinh anh 08](picture/orderdetail.jpg)
+
+## Thiếu sót của dự án:
++ Chưa có thanh toán online
++ Chưa có gitignore để không up file .env lên git
++ ....
