@@ -3,6 +3,9 @@
 + src: chứa các api để gọi đến và tương tác với database
 + ecommerce-app-frontend: chứa các screen
 
+## Database diagram
+![Hinh anh 01](picture/database.png)
+
 ## Ảnh một số screen:
 ### Ảnh màn hình đăng nhập và đăng ký
 ![Hinh anh 01](picture/signin.jpg)
