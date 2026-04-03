@@ -1,12 +1,12 @@
 ## Mô tả dự án: sử dụng express(nodejs) cho backend và react-native(dùng expo để chạy) cho frontend
 ## Thư mục chính:
-+ src: chứa các api để gọi đến và tương tác với database
-  Sử dụng express để code các api và sử dụng sequelize(ORM) để dễ dàng tương tác (CRUD) với cơ sở dữ liệu (SQL Server)
-  Thư mục Model trong thư mục src đại diện cho các bảng
-  API sẽ được bảo mật bằng 2 cách:
-    Các API như đăng nhập, đăng ký sẽ cần phải được cấp khóa mới có thể gọi
-    Các API của người dùng sử dụng như thêm sản phẩm vào giỏ hàng, tạo đơn hàng, thanh toán,... chỉ được gọi khi kiểm tra đúng token của user đó. Khi user đăng ký sẽ trả về token trong token sẽ có các thông tin của người dùng được mã hóa và được lưu trong JWWT
-+ ecommerce-app-frontend: chứa các screen được viết bằng react
+### src: chứa các api để gọi đến và tương tác với database
+  + Sử dụng express để code các api và sử dụng sequelize(ORM) để dễ dàng tương tác (CRUD) với cơ sở dữ liệu (SQL Server)
+  + Thư mục Model trong thư mục src đại diện cho các bảng
+  + API sẽ được bảo mật bằng 2 cách:
+    + Các API như đăng nhập, đăng ký sẽ cần phải được cấp khóa mới có thể gọi
+    + Các API của người dùng sử dụng như thêm sản phẩm vào giỏ hàng, tạo đơn hàng, thanh toán,... chỉ được gọi khi kiểm tra đúng token của user đó. Khi user đăng ký sẽ trả về token trong token sẽ có các thông tin của người dùng được mã hóa và được lưu trong JWWT
+### ecommerce-app-frontend: chứa các screen được viết bằng react
 
 ## Database diagram
 ![Hinh anh 01](picture/database.png)
