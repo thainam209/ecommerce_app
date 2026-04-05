@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, act } from 'react';
 import {
   View,
   Text,
@@ -288,6 +288,21 @@ export default function OrderDetailScreen({ navigation, route }: any) {
             </Text>
           </TouchableOpacity>
         </View>
+        {/*Nút thanh toán Online đơn hàng*/}
+        <View style={{ marginTop: 40, alignItems: 'center' }}>
+            <TouchableOpacity
+              style={[
+                styles.cancleButton,
+                status === 'pending - unpaid' ? styles.activePay : styles.nonactive,
+              ]}
+              disabled={status !== 'pending - unpaid'}
+              onPress={() => navigation.navigate('PayOnlineScreen', { orderId })} // mở modal xác nhận
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                Thanh toán Online
+              </Text>
+            </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Modal xác nhận hủy */}
@@ -354,6 +369,9 @@ const styles = StyleSheet.create({
   },
   active: {
     backgroundColor: '#e74c3c',
+  },
+  activePay: {
+    backgroundColor: '#10e20d',
   },
   nonactive: {
     backgroundColor: '#95a5a6',

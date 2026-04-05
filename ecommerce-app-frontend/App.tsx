@@ -13,7 +13,7 @@ import UserScreen from './screens/UserScreen';
 import OrderDetailScreen from './screens/OrderDetailScreen';
 import ComboScreen from './screens/ComboScreen';
 import ComboScreenDetail from './screens/ComboScreenDetail'
-
+import PayOnlineScreen from './screens/PayOnlineScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -32,7 +32,7 @@ export default function App() {
         <Stack.Screen name="OrderDetailScreen" component={OrderDetailScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="ComboScreen" component={ComboScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="ComboScreenDetail" component={ComboScreenDetail} options={{ headerShown: false }}/>
-        
+        <Stack.Screen name="PayOnlineScreen" component={PayOnlineScreen} options={{ headerShown: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

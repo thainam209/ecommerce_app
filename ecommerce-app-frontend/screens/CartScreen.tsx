@@ -72,6 +72,7 @@ export default function CartScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('cod'); // 'cod' = thanh toán khi nhận hàng, 'online' = thanh toán online
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [receiverName, setReceiverName] = useState('');
@@ -278,7 +279,7 @@ export default function CartScreen({ navigation }: any) {
         `${API_URL}/orders`,
         {
           total: total,
-          status: 'pending',
+          status: 'pending - unpaid',
           recipientName: receiverName.trim(),           // Đúng tên field
           recipientPhone: receiverPhone.trim(),         // Đúng tên field
           shippingAddress: receiverAddress.trim(),      // Đúng tên field
@@ -337,10 +338,17 @@ export default function CartScreen({ navigation }: any) {
           onPress: () => {
             setSelectedItems([]);
             fetchCart();
-            navigation.navigate('OrdersScreen');
+            //nếu chọn thanh toán khi nhân hàng thì navigation.navigate('OrdersScreen');
+            //nếu chọn thanh toán online thì navigation.navigate('PayOnlineScreen', { orderId: orderId });
+            if(paymentMethod === 'cod') {
+              navigation.navigate('OrdersScreen');
+            } else if(paymentMethod === 'online') {
+              navigation.navigate('PayOnlineScreen', { orderId: orderId });
+            }
           },
         },
       ]);
+
     } catch (error: any) {
       console.error('Lỗi checkout:', error.response?.data || error.message);
       Alert.alert(
@@ -568,8 +576,9 @@ export default function CartScreen({ navigation }: any) {
                   <Text style={styles.modalBtnText}>Hủy</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: '#2A4BA0' }]}
+                  style={[styles.modalBtn, { backgroundColor: '#cf7209' }]}
                   onPress={() => {
+                    setPaymentMethod('cod');
                     // Nếu không dùng voucher (selectedVoucher = null) → chỉ thanh toán bình thường
                     // Nếu có dùng voucher → thanh toán + xóa voucher đó đi (voucher dùng 1 lần)
                     confirmCheckout();
@@ -578,7 +587,19 @@ export default function CartScreen({ navigation }: any) {
                     }
                   }}
                 >
-                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>Xác nhận thanh toán</Text>
+                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>Thanh toán khi nhận hàng</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: '#2A4BA0' }]}
+                  onPress={() => {
+                    setPaymentMethod('online');
+                    confirmCheckout();
+                    if (selectedVoucher?.id) {
+                      deleteVoucher(selectedVoucher.id);
+                    }
+                  }}
+                >
+                  <Text style={[styles.modalBtnText, { color: '#fff' }]}>Thanh toán Online</Text>
                 </TouchableOpacity>
               </View>
             </View>

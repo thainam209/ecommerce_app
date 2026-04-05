@@ -3,6 +3,7 @@ import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert, Switch, Act
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import API_URL from '../config/api';
+import APIKEY from '../config/key';
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
@@ -16,6 +17,8 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
   };
 
   const login = async () => {
+    console.log('API_URL:', API_URL);
+    console.log('APIKEY:', APIKEY);
     if (isLoading) return;
 
     // Reset lỗi cũ (nếu có)
@@ -44,6 +47,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email: email.trim(),
         password,
+        apikey: APIKEY
       });
 
       const token = response.data.token;

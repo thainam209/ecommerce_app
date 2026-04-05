@@ -16,7 +16,11 @@ const Order = ({ createdAt, status, orderPrice, onPress }:any) => {
         <View style={{ flexDirection: 'row', marginTop: 10 }}>
           <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Trạng thái đơn hàng: </Text>
           {/* Nếu trạng thái pending thì màu cam, on delivery màu xanh lá, delivered màu xám, canceled màu đỏ */}
-          <Text style={{ color: status === 'pending' ? 'orange' : status === 'on delivery' ? 'green' : status === 'delivered' ? 'gray' : 'red', fontSize: 16 }}>
+          <Text style={{ color: status === 'approved - unpaid' ? 'orange'
+                              : status === 'approved - paid' ? 'orange' 
+                              : status === 'on delivery' ? 'green' 
+                              : status === 'delivered' ? 'gray' 
+                              : 'red', fontSize: 16 }}>
             {status}
           </Text>
         </View>

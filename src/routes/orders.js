@@ -15,6 +15,19 @@ router.get('/', async (req, res) => {
   res.json({ orders });
 });
 
+//api lấy order theo id
+router.get('/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+  res.json({ order });
+});
+
 router.post('/', async (req, res) => {
   const { total, status, recipientName, recipientPhone, shippingAddress, note } = req.body;
 
@@ -31,7 +44,7 @@ router.post('/', async (req, res) => {
     const order = await Order.create({
       userId: req.user.id,
       total: totalAmount,
-      status: status?.trim() || 'pending',
+      status: status?.trim() || 'pending - unpaid',
       recipientName: recipientName,
       recipientPhone: recipientPhone,
       shippingAddress: shippingAddress,
@@ -92,6 +105,39 @@ router.put('/:orderId', async (req, res) => {
   }
 });
 
+//api sửa trạng thái đơn hàng thành đã duyệt - đã thanh toán (danh cho chức năng thanh toán Online)
+router.put('/payapprove/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // tìm order theo id
+    const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // cập nhật status
+    order.status = 'approved - paid';
+    await order.save();
+
+    return res.json({
+      message: 'Order approved and paid successfully',
+      order
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Server error',
+      error
+    });
+  }
+});
+
 //api lấy toàn bộ đơn hàng cho admin
 router.get('/admin', async (req, res) => {
   if (!req.user?.id) {
@@ -106,6 +152,39 @@ router.get('/admin', async (req, res) => {
   }
   res.json('not admin');
 }); 
+
+//api duyệt đơn cho admin
+router.put('/approve/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  if (!req.user?.id) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // tìm order theo id
+    const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // cập nhật status
+    order.status = 'approved - unpaid';
+    await order.save();
+
+    return res.json({
+      message: 'Order approved successfully',
+      order
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Server error',
+      error
+    });
+  }
+});
 
 
 module.exports = router;
