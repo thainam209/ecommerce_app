@@ -19,6 +19,7 @@
 + Mở 2 terminal để chạy frontend, backend
 + Ở thư mục backend(src) chạy lệnh npm start để khởi chạy api và kết nối với DB
 + Ở thư mục frontend(ecommerce-app-frontend) chạy lệnh npm start, khi có mã QR sử dụng điện thoại quét để tương tác với giao diện
++ Tải file db và import vào sql server (tài khoản demo: nam209@gmail.com | mk:123456)
 
 ## Thiếu sót của dự án:
 + Chưa mở rộng thêm chức năng dành cho shipper để thực hiện theo đúng quy trình thực tế và khách hàng có thể theo dõi đơn hàng của mình đang ở đâu
