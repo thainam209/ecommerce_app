@@ -124,12 +124,16 @@ router.get('/category/:categoryId', async (req, res) => {
   res.json(products);
 });
 
-router.post('/', async (req, res) => {
+//API DÀNH CHO ADMIN (thêm sửa xóa)
+//đẩy ảnh từ thiết bị lên cloudinary rồi lưu URL vào database, có thể dùng multer để xử lý upload file
+//trước khi đẩy tự resize ảnh về kích thước phù hợp (nếu cần) để tiết kiệm băng thông và dung lượng lưu trữ
+
+router.post('/admin', async (req, res) => {
   const product = await Product.create(req.body);
   res.json(product);
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/admin/:id', async (req, res) => {
   const product = await Product.findByPk(req.params.id);
   if (product) {
     await product.update(req.body);
@@ -137,12 +141,14 @@ router.put('/:id', async (req, res) => {
   } else res.status(404).json({ error: 'Not found' });
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/admin/:id', async (req, res) => {
   const product = await Product.findByPk(req.params.id);
   if (product) {
     await product.destroy();
     res.json({ message: 'Deleted' });
   } else res.status(404).json({ error: 'Not found' });
 });
+
+
 
 module.exports = router;

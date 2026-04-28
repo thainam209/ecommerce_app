@@ -4,6 +4,7 @@ const router = express.Router();
 const { Order, User } = require('../models');
 const { where } = require('sequelize');
 
+//api lấy toàn bộ order của user đã đăng nhập
 router.get('/', async (req, res) => {
   if (!req.user?.id) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -16,11 +17,12 @@ router.get('/', async (req, res) => {
 });
 
 //api lấy order theo id
-router.get('/:orderId', async (req, res) => {
+router.get('/user/:orderId', async (req, res) => {
   const { orderId } = req.params;
   if (!req.user?.id) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  
   const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
   if (!order) {
     return res.status(404).json({ error: 'Order not found' });
@@ -28,6 +30,7 @@ router.get('/:orderId', async (req, res) => {
   res.json({ order });
 });
 
+//api tạo order mới
 router.post('/', async (req, res) => {
   const { total, status, recipientName, recipientPhone, shippingAddress, note } = req.body;
 
@@ -138,53 +141,66 @@ router.put('/payapprove/:orderId', async (req, res) => {
   }
 });
 
-//api lấy toàn bộ đơn hàng cho admin
+// ================== ADMIN: LẤY TOÀN BỘ ĐƠN HÀNG ==================
 router.get('/admin', async (req, res) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  const admin = await User.findByPk(req.user.id);
-
-  console.log(admin.role);  
-  if(admin.role === 'admin'){
-    const fullOrders = await Order.findAll();
-    res.json(fullOrders);
-  }
-  res.json('not admin');
-}); 
-
-//api duyệt đơn cho admin
-router.put('/approve/:orderId', async (req, res) => {
-  const { orderId } = req.params;
-  if (!req.user?.id) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
   try {
-    // tìm order theo id
-    const order = await Order.findOne({ where: { id: orderId, userId: req.user.id } });
-
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // cập nhật status
-    order.status = 'approved - unpaid';
+    const admin = await User.findByPk(req.user.id);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: not admin' });
+    }
+
+    const orders = await Order.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.json({orders});
+  } catch (error) {
+    console.error('GET /orders/admin error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// ================== ADMIN: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG ==================
+router.put('/admin/:id', async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const admin = await User.findByPk(req.user.id);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: not admin' });
+    }
+
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    if (!status || typeof status !== 'string') {
+      return res.status(400).json({ error: 'Thiếu hoặc sai status' });
+    }
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    order.status = status.trim();
     await order.save();
 
     return res.json({
-      message: 'Order approved successfully',
-      order
+      message: 'Order updated successfully',
+      order,
     });
-
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Server error',
-      error
-    });
+    console.error('PUT /orders/:id error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 
 module.exports = router;

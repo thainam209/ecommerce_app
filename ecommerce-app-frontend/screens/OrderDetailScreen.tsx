@@ -163,7 +163,7 @@ export default function OrderDetailScreen({ navigation, route }: any) {
     try {
       const token = await getToken();
       const response = await axios.put(
-        `${API_URL}/orders/${orderId}`,
+        `${API_URL}/orders/user/${orderId}`,
         {}, 
         {
           headers: { Authorization: `Bearer ${token}` },
