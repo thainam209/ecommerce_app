@@ -14,7 +14,7 @@
 ## Ảnh một số screen nằm trong thư mục picture
 
 ## Hướng dẫn chạy dự án
-+ Cài đặt nodeJS phiên bản 20, sau khi cài thì chạy lệnh npm install để cài các thư viện, chạy npm install sequelize, npm install helious để sử dụng sequelize và kết nối nối SQL Server
++ Cài đặt nodeJS phiên bản 20, sau khi cài thì chạy lệnh npm install để cài các thư viện, chạy npm install sequelize, npm install tedious để sử dụng sequelize và kết nối nối SQL Server
 + Cài đặt ứng dụng expo trên điện thoại
 + Mở 2 terminal để chạy frontend, backend
 + Ở thư mục backend(src) chạy lệnh npm start để khởi chạy api và kết nối với DB
