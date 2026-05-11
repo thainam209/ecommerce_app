@@ -14,6 +14,7 @@ import { Colors } from "@/constants/theme";
 import API_BASE_URL from "../../../config/api";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import { BackToManageButton } from "@/components/BackToManageButton";
 
 type Category = {
   id: number;
@@ -33,8 +34,6 @@ export default function ManageCategoriesScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme] as any;
 
-  const { token, loading: authLoading, isAdmin } = useAdminAuth();
-
   const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,13 +46,25 @@ export default function ManageCategoriesScreen() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem("admin_token");
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+
+  const token = getToken();
+
   useEffect(() => {
-    if (authLoading || !token || !isAdmin) return;
     fetchCategories();
-}, [authLoading, token, isAdmin]);
+}, []);
 
   async function fetchCategories(page: number = 1, limit: number = 20) {
     try {
+      const token = await getToken();
+
       if (!token) return;
       setLoading(true);
       const res = await fetch(
@@ -121,6 +132,7 @@ export default function ManageCategoriesScreen() {
 
     try {
       setSaving(true);
+      const token = await getToken();
 
       console.log("➡️ Saving category:", { method, url, payload });
 
@@ -137,12 +149,12 @@ export default function ManageCategoriesScreen() {
       console.log("⬅️ Save category response:", res.status, text);
 
       if (!res.ok) {
-        Alert.alert("Lỗi", `Không lưu được danh mục.\n\n${text}`);
+        alert("Lỗi"+ `Không lưu được danh mục.\n\n${text}`);
         return;
       }
 
-      Alert.alert(
-        "Thành công",
+      alert(
+        "Thành công"+
         isEdit ? "Đã lưu thay đổi danh mục" : "Đã thêm danh mục mới"
       );
 
@@ -150,55 +162,48 @@ export default function ManageCategoriesScreen() {
       resetForm();
     } catch (err: any) {
       console.error("Save category exception:", err?.message);
-      Alert.alert("Lỗi", "Có lỗi khi gọi API categories");
+      alert("Lỗi"+ "Có lỗi khi gọi API categories");
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(cat: Category) {
+
+    const token = await getToken();
     if (!token) {
-          Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.");
+          alert("Phiên hết hạn"+ "Vui lòng đăng nhập lại.");
           return;
     }
 
-    Alert.alert(
-      "Xoá danh mục",
-      `Bạn có chắc chắn muốn xoá danh mục "${cat.name}"?`,
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Xoá",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const url = `${API_BASE_URL}/categories/${cat.id}`;
-              console.log("➡️ Deleting category:", url);
+    const result = confirm("Xoá danh mục"+`Bạn có chắc chắn muốn xoá danh mục ?`);
 
-              const res = await fetch(url, {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                 }
-              );
-              const text = await res.text();
-              console.log("⬅️ Delete category response:", res.status, text);
+    if(result) {
+      try {
+        const url = `${API_BASE_URL}/categories/${cat.id}`;
+        console.log("➡️ Deleting category:", url);
 
-              if (!res.ok) {
-                Alert.alert("Lỗi", `Không xoá được danh mục.\n\n${text}`);
-                return;
-              }
-
-              setCategories((prev) => prev.filter((c) => c.id !== cat.id));
-            } catch (err: any) {
-              console.error("Delete category exception:", err?.message);
-              Alert.alert("Lỗi", "Có lỗi khi xoá danh mục");
+        const res = await fetch(url, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
             }
-          },
-        },
-      ]
-    );
+        );
+        const text = await res.text();
+        console.log("⬅️ Delete category response:", res.status, text);
+
+        if (!res.ok) {
+          alert("Lỗi" + `Không xoá được danh mục.\n\n${text}`);
+          return;
+        }
+
+        setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+      } catch (err: any) {
+        console.error("Delete category exception:", err?.message);
+        Alert.alert("Lỗi", "Có lỗi khi xoá danh mục");
+      }
+    }
   }
 
   const bgColor =
@@ -206,16 +211,16 @@ export default function ManageCategoriesScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <BackToDashboardButton />
+      <BackToManageButton />
       <View style={[styles.container, { backgroundColor: bgColor }]}>
         {/* Header */}
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.title, { color: theme.text ?? "#e5e7eb" }]}>
+            <Text style={[styles.title, { color:  "#0c0c0c" }]}>
               Quản lý danh mục
             </Text>
             <Text
-              style={[styles.subtitle, { color: theme.muted ?? "#9ca3af" }]}
+              style={[styles.subtitle, { color:  "#9ca3af" }]}
             >
               Thêm, chỉnh sửa, xoá các danh mục sản phẩm
             </Text>
@@ -236,7 +241,7 @@ export default function ManageCategoriesScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: theme.text ?? "#e5e7eb" },
+                { color:  "#080808" },
               ]}
             >
               Danh sách
@@ -248,7 +253,7 @@ export default function ManageCategoriesScreen() {
                 <Text
                   style={{
                     marginTop: 8,
-                    color: theme.muted ?? "#9ca3af",
+                    color:  "#9ca3af",
                   }}
                 >
                   Đang tải danh mục...
@@ -265,7 +270,7 @@ export default function ManageCategoriesScreen() {
                       <Text
                         style={[
                           styles.categoryName,
-                          { color: theme.text ?? "#e5e7eb" },
+                          { color:  "#e5e7eb" },
                         ]}
                         numberOfLines={1}
                       >
@@ -317,7 +322,7 @@ export default function ManageCategoriesScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: theme.text ?? "#e5e7eb" },
+                { color:  "#e5e7eb" },
               ]}
             >
               {editingCategory ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
@@ -330,7 +335,7 @@ export default function ManageCategoriesScreen() {
                 onChangeText={setName}
                 placeholder="Nhập tên danh mục"
                 placeholderTextColor="#6b7280"
-                style={[styles.input, { color: theme.text ?? "#e5e7eb" }]}
+                style={[styles.input, { color:  "#e5e7eb" }]}
               />
 
               <Text style={styles.label}>Mô tả</Text>
@@ -342,7 +347,7 @@ export default function ManageCategoriesScreen() {
                 style={[
                   styles.input,
                   styles.inputMultiline,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color:  "#e5e7eb" },
                 ]}
                 multiline
                 numberOfLines={3}

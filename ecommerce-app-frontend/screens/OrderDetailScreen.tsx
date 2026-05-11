@@ -278,9 +278,9 @@ export default function OrderDetailScreen({ navigation, route }: any) {
           <TouchableOpacity
             style={[
               styles.cancleButton,
-              status === 'pending' ? styles.active : styles.nonactive,
+              status === 'pending - unpaid' ? styles.active : styles.nonactive,
             ]}
-            disabled={status !== 'pending'}
+            disabled={status !== 'pending - unpaid'}
             onPress={openCancelModal} // mở modal xác nhận
           >
             <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>

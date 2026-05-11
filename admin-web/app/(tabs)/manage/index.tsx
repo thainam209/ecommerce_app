@@ -2,29 +2,40 @@ import { View, Text, Button, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import { useEffect } from "react";
 
 
 export default function ManageScreen() {
   const router = useRouter();
-  const { loading, token, isAdmin } = useAdminAuth();
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Đang kiểm tra đăng nhập...</Text>
-      </View>
-    );
-  }
-  if (!token || !isAdmin) {
+  
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem('admin_token');
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+
+  const token = getToken();
+
+  if (!token) {
     // hook sẽ tự redirect, ở đây chỉ show tạm
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>token: {token}</Text>
         <Text>Bạn cần đăng nhập admin.</Text>
       </View>
     );
   }
 
+  useEffect(() => {
+    getToken();
+  }, [token]);
+
   return (
     <View style={{ flex: 1, padding: 16, gap: 12 }}>
+      <Text>token: {token}</Text>
       <BackToDashboardButton />
       <Text style={{ fontSize: 22, fontWeight: "700", marginBottom: 12 }}>
         Quản lý hệ thống

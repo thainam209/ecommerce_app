@@ -148,8 +148,9 @@ router.get('/admin', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const admin = await User.findByPk(req.user.id);
-    if (!admin || admin.role !== 'admin') {
+    console.log(req.user.role);
+
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden: not admin' });
     }
 

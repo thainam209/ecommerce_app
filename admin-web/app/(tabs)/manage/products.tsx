@@ -15,12 +15,16 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import API_BASE_URL from '../../../config/api';
 import { uploadImageToCloudinary } from "@/lib/uploadImage";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { BackToManageButton } from "@/components/BackToManageButton";
 
 
-// const API_BASE_URL =
-//   process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
+type Category = {
+  id: number;
+  name: string;
+};
 
 type products = {
   id: number;
@@ -40,16 +44,26 @@ type Pagination = {
 };
 
 export default function ManageProductsScreen() {
+  const router = useRouter();
+
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme] as any;
 
-  const { token, loading: authLoading, isAdmin } = useAdminAuth();
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem("admin_token");
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
 
   const [products, setProducts] = useState<products[]>([]);
-  const [categoryId, setCategoryId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<products | null>(null);
@@ -66,12 +80,32 @@ export default function ManageProductsScreen() {
   
 
   useEffect(() => {
-    if (authLoading || !token || !isAdmin) return;
     fetchProducts();
-  }, [authLoading, token, isAdmin]);
+    fetchCategories();
+  }, []);
+
+  async function fetchCategories() {
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}/categories?page=1&limit=100`,
+        { 
+          headers: {  
+            Authorization: `Bearer ${token}` 
+          },
+        }
+      );
+      const json = await res.json();
+      const data: Category[] = json.data ?? json.categories ?? json;
+      setCategories(data || []);
+    } catch (e: any) {
+      console.error("Fetch categories error:", e?.message);
+    } finally {
+    }
+  }
 
   async function fetchProducts(page: number = 1, limit: number = 20) {
     try {
+      const token = await getToken();
       if (!token) return;
       setLoading(true);
       const res = await fetch(
@@ -83,7 +117,7 @@ export default function ManageProductsScreen() {
         }
       );
       const json = await res.json();
-
+      //
       const data: products[] = json.data ?? json.products ?? json;
       const pag: Pagination =
         json.pagination ?? json.meta ?? {
@@ -93,12 +127,16 @@ export default function ManageProductsScreen() {
           totalPages: 1,
           hasMore: false,
         };
-
-      setProducts(data || []);
+      // Nếu page = 1 thì set mới, còn page > 1 thì append vào cuối
+      if (page === 1) {
+        setProducts(data || []);
+      } else {
+        setProducts((prev) => [...prev, ...(data || [])]);
+      }
       setPagination(pag);
     } catch (e: any) {
       console.error("Fetch products error:", e?.message);
-      Alert.alert("Lỗi", "Không tải được danh sách sản phẩm");
+      alert("Lỗi"+ "Không tải được danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -107,7 +145,7 @@ export default function ManageProductsScreen() {
   function resetForm() {
     setName("");
     setPrice("");
-    setCategoryId("");
+    setCategoryId(null);
     setDescription("");
     setImageUrl("");
     setEditingProduct(null);
@@ -119,10 +157,11 @@ export default function ManageProductsScreen() {
   }
 
   function openEditForm(product: products) {
+    // alert('hihihi');
     setEditingProduct(product);
     setName(product.name ?? "");
     setPrice(product.price?.toString() ?? "");
-    setCategoryId(product.categoryId?.toString() ?? "");
+    setCategoryId(product.categoryId ?? null);
     setDescription(product.description ?? "");
     setImageUrl(product.image ?? "");
     setIsFormOpen(true);
@@ -135,12 +174,18 @@ export default function ManageProductsScreen() {
 
   async function handleSave() {
     if (!name.trim()) {
-      Alert.alert("Lỗi", "Tên sản phẩm không được để trống");
+      alert("Lỗi" + ": " + "Tên sản phẩm không được để trống");
       return;
     }
     const numericPrice = Number(price);
     if (isNaN(numericPrice) || numericPrice < 0) {
-      Alert.alert("Lỗi", "Giá sản phẩm không hợp lệ");
+      alert("Lỗi" + ": " + "Giá sản phẩm không hợp lệ");
+      return;
+    }
+
+    const token = await getToken();
+    if (!token) {
+      alert("Lỗi" + ": " + "Phiên hết hạn. Vui lòng đăng nhập lại.");
       return;
     }
 
@@ -154,8 +199,8 @@ export default function ManageProductsScreen() {
 
     const isEdit = Boolean(editingProduct?.id);
     const url = isEdit
-      ? `${API_BASE_URL}/products/${editingProduct!.id}`
-      : `${API_BASE_URL}/products`;
+      ? `${API_BASE_URL}/products/admin/${editingProduct!.id}`
+      : `${API_BASE_URL}/products/admin`;
     const method = isEdit ? "PUT" : "POST";
 
     try {
@@ -172,7 +217,7 @@ export default function ManageProductsScreen() {
       if (!res.ok) {
         const errorText = await res.text();
         console.error("Save product error:", errorText);
-        Alert.alert("Lỗi", "Không lưu được sản phẩm");
+        alert("Lỗi" + ": " + "Không lưu được sản phẩm");
         return;
       }
 
@@ -180,55 +225,48 @@ export default function ManageProductsScreen() {
       closeForm();
     } catch (e: any) {
       console.error("Save product exception:", e?.message);
-      Alert.alert("Lỗi", "Có lỗi khi lưu sản phẩm");
+      alert("Lỗi" + ": " + "Có lỗi khi lưu sản phẩm");
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(product: products) {
+    const token = await getToken();
+
     if (!token) {
-      Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.");
+      alert("Lỗi" + ": " + "Phiên hết hạn. Vui lòng đăng nhập lại.");
       return;
     }
 
-    Alert.alert(
-      "Xoá sản phẩm",
-      `Bạn có chắc chắn muốn xoá sản phẩm "${product.name}"?`,
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Xoá",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const res = await fetch(
-                `${API_BASE_URL}/products/${product.id}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-              if (!res.ok) {
-                const t = await res.text();
-                console.error("Delete product error:", t);
-                Alert.alert("Lỗi", "Không xoá được sản phẩm");
-                return;
-              }
-              // Xoá khỏi state
-              setProducts((prev) =>
-                prev.filter((p) => p.id !== product.id)
-              );
-            } catch (e: any) {
-              console.error("Delete product exception:", e?.message);
-              Alert.alert("Lỗi", "Có lỗi khi xoá sản phẩm");
-            }
-          },
-        },
-      ]
-    );
+    const result = confirm("Xoá sản phẩm"+`Bạn có chắc chắn muốn xoá sản phẩm ?`);
+
+    if (result) {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/products/admin/${product.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!res.ok) {
+          const t = await res.text();
+          console.error("Delete product error:", t);
+          alert("Lỗi" + ": " + "Không xoá được sản phẩm");
+          return;
+        }
+        // Xoá khỏi state
+        setProducts((prev) =>
+          prev.filter((p) => p.id !== product.id)
+        );
+      } catch (e: any) {
+        console.error("Delete product exception:", e?.message);
+        alert("Lỗi"+ ": " + e?.message);
+      }
+    };
   }
 
   function handleOpenFilePicker() {
@@ -236,12 +274,11 @@ export default function ManageProductsScreen() {
       if (fileInputRef.current) {
         fileInputRef.current.click();
       } else {
-        Alert.alert("Lỗi", "Không tìm thấy input file");
+        alert("Lỗi: Không tìm thấy input file");
       }
     } else {
-      Alert.alert(
-        "Thông báo",
-        "Upload ảnh trực tiếp chỉ demo cho web. Nếu chạy mobile, em dùng expo-image-picker."
+      alert(
+        "Upload ảnh thành công"
       );
     }
   }
@@ -253,9 +290,9 @@ export default function ManageProductsScreen() {
     try {
         const url = await uploadImageToCloudinary(file);
         setImageUrl(url);
-        Alert.alert("Thành công", "Ảnh đã được upload lên Cloudinary");
+        alert("Thành công! Ảnh đã được upload lên Cloudinary");
     } catch (err: any) {
-        Alert.alert("Lỗi", err.message || "Upload thất bại");
+        alert("Lỗi"+ err.message );
     }
 
     event.target.value = ""; // reset input
@@ -267,7 +304,7 @@ export default function ManageProductsScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <BackToDashboardButton />
+      <BackToManageButton />
       <View style={[styles.container, { backgroundColor: bgColor }]}>
         {/* Header */}
           <View style={styles.headerRow}>
@@ -339,7 +376,7 @@ export default function ManageProductsScreen() {
                         <Text
                           style={[
                             styles.productName,
-                            { color: theme.text ?? "#e5e7eb" },
+                            { color: "#e5e7eb" },
                           ]}
                           numberOfLines={1}
                         >
@@ -388,14 +425,26 @@ export default function ManageProductsScreen() {
                 )}
               </ScrollView>
             )}
+            {/* thêm nút load more */}
+            {/* khi ấn nút sẽ render ra thêm sản phẩm nhưng không mất dữ liệu trước đó */}
+             {pagination?.hasMore && (
+              <TouchableOpacity
+                style={[{backgroundColor: '#0b5bda', marginTop:20, width: 100, height:50, borderRadius: 25, justifyContent: 'center', paddingLeft:15},
+                   { alignSelf: "center" }]}
+                onPress={() => fetchProducts(pagination.page + 1, pagination.limit)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Load More</Text>
+              </TouchableOpacity>
+            )} 
           </View>
 
           {/* Bên phải: Form thêm / sửa */}
+          <ScrollView style={styles.rightPane} contentContainerStyle={{ paddingBottom: 20 }}>
           <View style={styles.rightPane}>
             <Text
               style={[
                 styles.sectionTitle,
-                { color: theme.text ?? "#e5e7eb" },
+                { color: "#e5e7eb" },
               ]}
             >
               {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
@@ -422,7 +471,7 @@ export default function ManageProductsScreen() {
                 placeholderTextColor="#6b7280"
                 style={[
                   styles.input,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color: "#e5e7eb" },
                 ]}
               />
 
@@ -435,11 +484,36 @@ export default function ManageProductsScreen() {
                 placeholderTextColor="#6b7280"
                 style={[
                   styles.input,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color: "#e5e7eb" },
                 ]}
               />
-              <Text style={styles.label}>Category ID</Text>
-              <TextInput
+              <Text style={styles.label}>Category </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginVertical: 4 }}
+              >
+                {categories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.chip,
+                      categoryId === cat.id && styles.chipActive,
+                    ]}
+                    onPress={() => setCategoryId(cat.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        categoryId === cat.id && styles.chipTextActive,
+                      ]}
+                    >
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {/* <TextInput
                   value={categoryId}
                   onChangeText={setCategoryId}
                   placeholder="Nhập Category ID"
@@ -447,9 +521,9 @@ export default function ManageProductsScreen() {
                   placeholderTextColor="#6b7280"
                   style={[
                       styles.input,
-                      { color: theme.text ?? "#e5e7eb" },
+                      { color: "#e5e7eb" },
                   ]}
-              />
+              /> */}
               <Text style={styles.label}>Mô tả</Text>
               <TextInput
                 value={description}
@@ -459,7 +533,7 @@ export default function ManageProductsScreen() {
                 style={[
                   styles.input,
                   styles.inputMultiline,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color: "#e5e7eb" },
                 ]}
                 multiline
                 numberOfLines={3}
@@ -518,6 +592,7 @@ export default function ManageProductsScreen() {
               </View>
             </View>
           </View>
+          </ScrollView>
         </View>
       </View>
     </View>
@@ -649,6 +724,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     fontWeight: "600",
+    textAlign: "center",
   },
   secondaryButton: {
     paddingHorizontal: 12,
@@ -660,6 +736,7 @@ const styles = StyleSheet.create({
     color: "#e5e7eb",
     fontSize: 12,
     fontWeight: "500",
+    textAlign: "center",
   },
   dangerButton: {
     paddingHorizontal: 12,
@@ -742,4 +819,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
     alignItems: "center",
   },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#374151",
+    marginRight: 6,
+  },
+  chipActive: {
+    backgroundColor: "#4f46e5",
+    borderColor: "#4f46e5",
+  },
+  chipText: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  chipTextActive: {
+    color: "#f9fafb",
+    fontWeight: "600",
+  }
 });

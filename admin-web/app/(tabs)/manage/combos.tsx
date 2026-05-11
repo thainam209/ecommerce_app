@@ -17,6 +17,7 @@ import API_BASE_URL from "../../../config/api";
 import { uploadImageToCloudinary } from "@/lib/uploadImage";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import { BackToManageButton } from "@/components/BackToManageButton";
 
 type Combo = {
   id: number;
@@ -52,8 +53,6 @@ export default function ManageCombosScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme] as any;
 
-  const { token, loading: authLoading, isAdmin } = useAdminAuth();
-
   const [combos, setCombos] = useState<Combo[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(false);
@@ -77,16 +76,25 @@ export default function ManageCombosScreen() {
 
   const fileInputRef = useRef<any>(null);
 
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem('admin_token');
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    if (authLoading || !token || !isAdmin) return;
     fetchCombos();
     fetchCategories();
     fetchAllProducts();
-  }, [authLoading, token, isAdmin]);
+  }, []);
 
 
   async function fetchCombos(page: number = 1, limit: number = 20) {
     try {
+      const token = await getToken();
       setLoading(true);
       const res = await fetch(
         `${API_BASE_URL}/combos?page=${page}&limit=${limit}`,
@@ -121,6 +129,7 @@ export default function ManageCombosScreen() {
   async function fetchCategories() {
     try {
       setLoadingCategories(true);
+      const token = await getToken();
       const res = await fetch(`${API_BASE_URL}/categories?page=1&limit=100`,
         { 
           headers: {  
@@ -141,7 +150,8 @@ export default function ManageCombosScreen() {
   async function fetchAllProducts() {
     try {
       setLoadingProducts(true);
-      const res = await fetch(`${API_BASE_URL}/categories?page=1&limit=100`,
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}/products?page=1&limit=100`,
         { 
           headers: {  
             Authorization: `Bearer ${token}` 
@@ -182,6 +192,7 @@ export default function ManageCombosScreen() {
 
     // nếu backend có api để lấy combo items, em gọi ở đây
     try {
+      const token = await getToken();
       const res = await fetch(
         `${API_BASE_URL}/combos/comboitems/${combo.id}`,
         { 
@@ -203,39 +214,30 @@ export default function ManageCombosScreen() {
   }
 
   async function handleDelete(combo: Combo) {
-    Alert.alert(
-      "Xoá combo",
-      `Bạn có chắc chắn muốn xoá combo "${combo.name}"?`,
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Xoá",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const res = await fetch(
-                `${API_BASE_URL}/combos/${combo.id}`,
-                { method: "DELETE",
-                  headers: { 
-                    Authorization: `Bearer ${token}`
-                  }
-                }
-              );
-              if (!res.ok) {
-                const t = await res.text();
-                console.error("Delete combo error:", t);
-                Alert.alert("Lỗi", "Không xoá được combo");
-                return;
-              }
-              setCombos((prev) => prev.filter((c) => c.id !== combo.id));
-            } catch (e: any) {
-              console.error("Delete combo exception:", e?.message);
-              Alert.alert("Lỗi", "Có lỗi khi xoá combo");
+    const result = confirm("Xoá combo"+`Bạn có chắc chắn muốn xoá combo?`);
+    if(result){
+      try {
+        const token = await getToken();
+        const res = await fetch(
+          `${API_BASE_URL}/combos/${combo.id}`,
+          { method: "DELETE",
+            headers: { 
+              Authorization: `Bearer ${token}`
             }
-          },
-        },
-      ]
-    );
+          }
+        );
+        if (!res.ok) {
+          const t = await res.text();
+          console.error("Delete combo error:", t);
+          Alert.alert("Lỗi", "Không xoá được combo");
+          return;
+        }
+        setCombos((prev) => prev.filter((c) => c.id !== combo.id));
+      } catch (e: any) {
+        console.error("Delete combo exception:", e?.message);
+        Alert.alert("Lỗi", "Có lỗi khi xoá combo");
+      }
+    }
   }
 
   function toggleProductSelection(productId: number) {
@@ -279,32 +281,33 @@ export default function ManageCombosScreen() {
   }
 
        async function handleSave() {
+        const token = await getToken();
         if (!token) {
             Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.");
             return;
         }
         if (!name.trim()) {
-            Alert.alert("Lỗi", "Tên combo không được để trống");
+            Alert.alert("Lỗi"+ "Tên combo không được để trống");
             return;
         }
         if (!categoryId) {
-            Alert.alert("Lỗi", "Vui lòng chọn danh mục cho combo");
+            Alert.alert("Lỗi"+ "Vui lòng chọn danh mục cho combo");
             return;
         }
         if (selectedProductIds.length === 0) {
-            Alert.alert("Lỗi", "Combo phải có ít nhất một sản phẩm");
+            Alert.alert("Lỗi"+ "Combo phải có ít nhất một sản phẩm");
             return;
         }
 
         const numericPriceSale = Number(priceSale || 0);
         if (isNaN(numericPriceSale) || numericPriceSale < 0) {
-            Alert.alert("Lỗi", "Giá sale không hợp lệ");
+            Alert.alert("Lỗi"+ "Giá sale không hợp lệ");
             return;
         }
 
         if (numericPriceSale > totalPrice) {
-            Alert.alert(
-            "Cảnh báo",
+            alert(
+            "Cảnh báo"+
             "Giá sale đang lớn hơn tổng giá sản phẩm. Hãy kiểm tra lại."
             );
         }
@@ -343,12 +346,12 @@ export default function ManageCombosScreen() {
             console.log("⬅️ Save combo response:", res.status, text);
 
             if (!res.ok) {
-            Alert.alert("Lỗi", `Không lưu được combo.\n\n${text}`);
+            alert("Lỗi" + `Không lưu được combo.\n\n${text}`);
             return;
             }
 
-            Alert.alert(
-            "Thành công",
+            alert(
+            "Thành công"+
             editingCombo ? "Đã lưu thay đổi combo" : "Đã thêm combo mới"
             );
 
@@ -367,7 +370,7 @@ export default function ManageCombosScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <BackToDashboardButton />
+      <BackToManageButton />
       <View style={[styles.container, { backgroundColor: bgColor }]}>
         {/* Header */}
         <View style={styles.headerRow}>
@@ -439,7 +442,7 @@ export default function ManageCombosScreen() {
                         <Text
                           style={[
                             styles.comboName,
-                            { color: theme.text ?? "#e5e7eb" },
+                            { color:  "#e5e7eb" },
                           ]}
                           numberOfLines={1}
                         >
@@ -482,23 +485,34 @@ export default function ManageCombosScreen() {
                 {combos.length === 0 && !loading && (
                   <Text
                     style={{
-                      color: theme.muted ?? "#9ca3af",
+                      color:  "#9ca3af",
                       fontStyle: "italic",
                     }}
                   >
                     Chưa có combo nào.
                   </Text>
                 )}
+
+                {/*thêm nút load more*/}
+                {pagination?.hasMore && (
+                  <TouchableOpacity
+                    style={[styles.secondaryButton, { marginVertical: 16 }]}
+                    onPress={() => fetchCombos(pagination.page + 1, pagination.limit)}
+                  >
+                    <Text style={styles.secondaryButtonText}>Tải thêm</Text>
+                  </TouchableOpacity>
+                )}
               </ScrollView>
             )}
           </View>
 
           {/* Right: form combo */}
+          <ScrollView style={styles.rightPane} contentContainerStyle={{ paddingBottom: 20 }}>
           <View style={styles.rightPane}>
             <Text
               style={[
                 styles.sectionTitle,
-                { color: theme.text ?? "#e5e7eb" },
+                { color:  "#e5e7eb" },
               ]}
             >
               {editingCombo ? "Chỉnh sửa combo" : "Thêm combo mới"}
@@ -523,7 +537,7 @@ export default function ManageCombosScreen() {
                 onChangeText={setName}
                 placeholder="Nhập tên combo"
                 placeholderTextColor="#6b7280"
-                style={[styles.input, { color: theme.text ?? "#e5e7eb" }]}
+                style={[styles.input, { color:  "#e5e7eb" }]}
               />
 
               <Text style={styles.label}>Danh mục</Text>
@@ -566,7 +580,7 @@ export default function ManageCombosScreen() {
                 style={[
                   styles.input,
                   styles.inputMultiline,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color:  "#e5e7eb" },
                 ]}
                 multiline
                 numberOfLines={3}
@@ -660,7 +674,7 @@ export default function ManageCombosScreen() {
                 placeholder="Nhập giá sale cho combo"
                 keyboardType="numeric"
                 placeholderTextColor="#6b7280"
-                style={[styles.input, { color: theme.text ?? "#e5e7eb" }]}
+                style={[styles.input, { color:  "#e5e7eb" }]}
               />
 
               <View style={styles.formActions}>
@@ -687,6 +701,7 @@ export default function ManageCombosScreen() {
               </View>
             </View>
           </View>
+          </ScrollView>
         </View>
       </View>
     </View>

@@ -129,8 +129,13 @@ router.get('/category/:categoryId', async (req, res) => {
 //trước khi đẩy tự resize ảnh về kích thước phù hợp (nếu cần) để tiết kiệm băng thông và dung lượng lưu trữ
 
 router.post('/admin', async (req, res) => {
+  try {
   const product = await Product.create(req.body);
-  res.json(product);
+    res.json(product);
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
 });
 
 router.put('/admin/:id', async (req, res) => {

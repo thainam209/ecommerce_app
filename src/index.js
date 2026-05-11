@@ -47,6 +47,7 @@ const chatRoutes = require('./routes/chat');
 const infouserRoutes = require('./routes/infouser');
 const voucherRoutes = require('./routes/vouchers');
 const comboRoutes = require('./routes/combo');
+const uploadRoutes = require('./routes/upload');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -58,5 +59,6 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/infouser', authenticate, infouserRoutes);
 app.use('/api/vouchers', authenticate , voucherRoutes);
 app.use('/api/combos', comboRoutes);
+app.use('/api/upload', authenticate, uploadRoutes);
 
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));

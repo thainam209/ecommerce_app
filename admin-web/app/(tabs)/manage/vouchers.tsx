@@ -14,6 +14,7 @@ import { Colors } from "@/constants/theme";
 import API_BASE_URL from "../../../config/api";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import { BackToManageButton } from "@/components/BackToManageButton";
 
 type Voucher = {
   id: number;
@@ -31,8 +32,6 @@ export default function ManageVouchersScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme] as any;
 
-  const { token, loading: authLoading, isAdmin } = useAdminAuth();
-
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -43,13 +42,25 @@ export default function ManageVouchersScreen() {
   const [userIdsInput, setUserIdsInput] = useState("");
 
   useEffect(() => {
-    if (authLoading || !token || !isAdmin) return;
     fetchVouchers();
-  }, [authLoading, token, isAdmin]);
+  }, []);
+
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem("admin_token");
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+
+  // const token = getToken();
 
 
   async function fetchVouchers() {
     try {
+
+      const token = await getToken();
       setLoading(true);
       const res = await fetch(`${API_BASE_URL}/vouchers/admin/all`, {
         headers: {
@@ -62,7 +73,7 @@ export default function ManageVouchersScreen() {
       setVouchers(data);
     } catch (err: any) {
       console.error("Fetch vouchers error:", err?.message);
-      Alert.alert("Lỗi", "Không tải được danh sách voucher");
+      alert("Lỗi"+ "Không tải được danh sách voucher");
     } finally {
       setLoading(false);
     }
@@ -75,18 +86,19 @@ export default function ManageVouchersScreen() {
   }
 
   async function handleAssign() {
+    const token = await getToken();
     if (!token) {
-      Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.");
+      alert("Lỗi" + ": " + "Phiên hết hạn. Vui lòng đăng nhập lại.");
       return;
     }
     if (!name.trim()) {
-      Alert.alert("Lỗi", "Tên voucher không được để trống");
+      alert("Lỗi" + ": " + "Tên voucher không được để trống");
       return;
     }
 
     const discountNumber = Number(discount);
     if (!Number.isInteger(discountNumber) || discountNumber <= 0) {
-      Alert.alert("Lỗi", "Discount phải là số nguyên dương");
+      alert("Lỗi" + ": " + "Discount phải là số nguyên dương");
       return;
     }
 
@@ -99,10 +111,7 @@ export default function ManageVouchersScreen() {
       .filter((n) => Number.isInteger(n) && n > 0);
 
     if (userIds.length === 0) {
-      Alert.alert(
-        "Lỗi",
-        "Vui lòng nhập ít nhất một userId (dạng: 1,3,5)"
-      );
+      alert("Lỗi" + ": " + "Vui lòng nhập ít nhất một userId (dạng: 1,3,5)");
       return;
     }
 
@@ -130,67 +139,57 @@ export default function ManageVouchersScreen() {
       console.log("⬅️ Assign vouchers response:", res.status, text);
 
       if (!res.ok) {
-        Alert.alert(
-          "Lỗi",
+        alert(
+          "Lỗi"+
           `Không tạo được voucher.\n\n${text || "Server error"}`
         );
         return;
       }
 
-      Alert.alert("Thành công", "Đã phân phát voucher cho user");
+      alert("Thành công" + ": " + "Đã phân phát voucher cho user");
       await fetchVouchers();
       resetForm();
     } catch (err: any) {
       console.error("Assign vouchers exception:", err?.message);
-      Alert.alert("Lỗi", "Có lỗi khi gọi API phân phát voucher");
+      alert("Lỗi" + ": " + "Có lỗi khi gọi API phân phát voucher");
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(voucher: Voucher) {
-    Alert.alert(
-      "Xoá voucher",
-      `Bạn có chắc chắn muốn xoá voucher "${voucher.name}" cho userId ${voucher.userId}?`,
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Xoá",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const url = `${API_BASE_URL}/vouchers/admin/${voucher.id}`;
-              console.log("➡️ Delete voucher:", url);
+    const result = confirm('Bạn có muốn xóa combo không ?');
+    if(result){
+      try {
+        const token = await getToken();
+        const url = `${API_BASE_URL}/vouchers/admin/${voucher.id}`;
+        console.log("➡️ Delete voucher:", url);
 
-              const res = await fetch(url, { 
-                method: "DELETE", 
-                headers: { 
-                  Authorization: `Bearer ${token}` 
-                }
-              }
-              );
-              const text = await res.text();
-              console.log("⬅️ Delete voucher response:", res.status, text);
+        const res = await fetch(url, { 
+          method: "DELETE", 
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
+        }
+        );
+        const text = await res.text();
+        console.log("⬅️ Delete voucher response:", res.status, text);
 
-              if (!res.ok) {
-                Alert.alert(
-                  "Lỗi",
-                  `Không xoá được voucher.\n\n${text || "Server error"}`
-                );
-                return;
-              }
-
-              setVouchers((prev) =>
-                prev.filter((v) => v.id !== voucher.id)
-              );
-            } catch (err: any) {
-              console.error("Delete voucher exception:", err?.message);
-              Alert.alert("Lỗi", "Có lỗi khi xoá voucher");
-            }
-          },
-        },
-      ]
-    );
+        if (!res.ok) {
+          alert(
+            "Lỗi"+
+            `Không xoá được voucher.\n\n${text || "Server error"}`
+          );
+          return;
+        }
+        setVouchers((prev) =>
+          prev.filter((v) => v.id !== voucher.id)
+        );
+      } catch (err: any) {
+        console.error("Delete voucher exception:", err?.message);
+        Alert.alert("Lỗi", "Có lỗi khi xoá voucher");
+      }
+    }
   }
 
   const bgColor =
@@ -198,7 +197,7 @@ export default function ManageVouchersScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <BackToDashboardButton />
+      <BackToManageButton />
       <View style={[styles.container, { backgroundColor: bgColor }]}>
         {/* Header */}
         <View style={styles.headerRow}>
@@ -232,7 +231,7 @@ export default function ManageVouchersScreen() {
                 <Text
                   style={{
                     marginTop: 8,
-                    color: theme.muted ?? "#9ca3af",
+                    color:  "#9ca3af",
                   }}
                 >
                   Đang tải voucher...
@@ -249,7 +248,7 @@ export default function ManageVouchersScreen() {
                       <Text
                         style={[
                           styles.voucherName,
-                          { color: theme.text ?? "#e5e7eb" },
+                          { color:  "#e5e7eb" },
                         ]}
                         numberOfLines={1}
                       >
@@ -300,7 +299,7 @@ export default function ManageVouchersScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: theme.text ?? "#e5e7eb" },
+                { color:  "#e5e7eb" },
               ]}
             >
               Tạo & phân phát voucher
@@ -313,7 +312,7 @@ export default function ManageVouchersScreen() {
                 onChangeText={setName}
                 placeholder="VD: Giảm 50K cho đơn từ 300K"
                 placeholderTextColor="#6b7280"
-                style={[styles.input, { color: theme.text ?? "#e5e7eb" }]}
+                style={[styles.input, { color:  "#e5e7eb" }]}
               />
 
               <Text style={styles.label}>
@@ -325,7 +324,7 @@ export default function ManageVouchersScreen() {
                 placeholder="Nhập số tiền giảm"
                 keyboardType="numeric"
                 placeholderTextColor="#6b7280"
-                style={[styles.input, { color: theme.text ?? "#e5e7eb" }]}
+                style={[styles.input, { color:  "#e5e7eb" }]}
               />
 
               <Text style={styles.label}>
@@ -339,7 +338,7 @@ export default function ManageVouchersScreen() {
                 style={[
                   styles.input,
                   styles.inputMultiline,
-                  { color: theme.text ?? "#e5e7eb" },
+                  { color:  "#e5e7eb" },
                 ]}
                 multiline
                 numberOfLines={2}

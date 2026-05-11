@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Combo, ComboItem } = require('../models');
 
-//api lấy danh sách sản phẩm với phân trang
+//api lấy danh sách combo với phân trang
 router.get('/', async (req, res) => {
   try {
     // Lấy tham số từ query string: ?page=1&limit=...
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-//api tìm kiếm sản phẩm
+//api tìm kiếm combo
 router.get('/search', async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
@@ -118,25 +118,46 @@ router.get('/category/:categoryId', async (req, res) => {
   res.json(Combos);
 });
 
+//api cho admin
+
 router.post('/', async (req, res) => {
-  const Combo = await Combo.create(req.body);
-  res.json(Combo);
+  try {
+    const combo = await Combo.create(req.body);
+    res.json(combo);
+  } catch (err) {
+    console.error('Create combo error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 router.put('/:id', async (req, res) => {
-  const Combo = await Combo.findByPk(req.params.id);
-  if (Combo) {
-    await Combo.update(req.body);
-    res.json(Combo);
-  } else res.status(404).json({ error: 'Not found' });
+  try {
+    const combo = await Combo.findByPk(req.params.id);
+    if (!combo) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    await combo.update(req.body);
+    res.json(combo);
+  } catch (err) {
+    console.error('Update combo error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 router.delete('/:id', async (req, res) => {
-  const Combo = await Combo.findByPk(req.params.id);
-  if (Combo) {
-    await Combo.destroy();
+  try {
+    const combo = await Combo.findByPk(req.params.id);
+    if (!combo) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    await combo.destroy();
     res.json({ message: 'Deleted' });
-  } else res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    console.error('Delete combo error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 //------------------------------------//

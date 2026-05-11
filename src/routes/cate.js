@@ -41,10 +41,7 @@ router.get('/:id', async (req, res) => {
   res.json(category || { error: 'Not found' });
 });
 
-// router.post('/', async (req, res) => {
-//   const category = await categories.create(req.body);
-//   res.json(category);
-// });
+//API cho admin
 router.post('/', async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -69,19 +66,44 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const category = await categories.findByPk(req.params.id);
-  if (category) {
+  try {
+    const id = parseInt(String(req.params.id).trim(), 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid category id' });
+    }
+
+    const category = await Categories.findByPk(id);
+    if (!category) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
     await category.update(req.body);
     res.json(category);
-  } else res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    console.error('Update category error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 router.delete('/:id', async (req, res) => {
-  const category = await categories.findByPk(req.params.id);
-  if (category) {
+  try {
+    const id = parseInt(String(req.params.id).trim(), 10);
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid category id' });
+    }
+
+    const category = await Categories.findByPk(id);
+    if (!category) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
     await category.destroy();
     res.json({ message: 'Deleted' });
-  } else res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    console.error('Delete category error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 });
 
 module.exports = router;

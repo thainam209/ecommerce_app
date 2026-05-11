@@ -26,7 +26,14 @@ type Order = {
 };
 
 export default function OrdersScreen() {
-  const { token, loading: authLoading, isAdmin } = useAdminAuth();
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem("admin_token");
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
 
   // ✅ Gán generic <Order[]> để không bị never[]
   const [orders, setOrders] = useState<Order[]>([]);
@@ -35,6 +42,8 @@ export default function OrdersScreen() {
   // Fetch orders
   const fetchOrders = async () => {
     try {
+      const token = await getToken();
+
       if (!token) return;
       setLoading(true);
 
@@ -62,14 +71,13 @@ export default function OrdersScreen() {
   };
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!token || !isAdmin) return;
     fetchOrders();
-  }, [authLoading, token, isAdmin]);
+  }, []);
 
   // Hàm đổi trạng thái đơn hàng
   const updateStatus = async (orderId: number, status: string) => {
     try {
+      const token = await getToken();
       if (!token) {
         Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.");
         return;
@@ -129,7 +137,7 @@ export default function OrdersScreen() {
 
       <View style={{ flexDirection: "row", marginTop: 10 }}>
         {/*Đơn đã hoàn thanh không thể hủy*/}
-        {item.status !== "completed" && (
+        {item.status !== "completed" && item.status !== "on delivery" && item.status !=="canceled" &&(
           <TouchableOpacity
             onPress={() => updateStatus(item.id, "canceled")}
             style={{
@@ -144,7 +152,7 @@ export default function OrdersScreen() {
         )}
 
         {/*Nếu đơn đã duyệt rồi thì không cho duyệt lại*/}
-        {item.status !== "approved - unpaid" && item.status !== "approved - paid" && item.status !== "on delivery" && item.status !== "completed" && (
+        {item.status !== "approved - unpaid" && item.status !== "approved - paid" && item.status !== "on delivery" && item.status !== "completed" &&  item.status !== "canceled" && (
           <TouchableOpacity
             onPress={() => updateStatus(item.id, "approved - unpaid")}
             style={{
@@ -157,9 +165,22 @@ export default function OrdersScreen() {
             <Text style={{ color: "#fff", fontWeight: "600" }}>Duyệt đơn</Text>
           </TouchableOpacity>
         )}
-
+        {/* Các đơn đã duyệt mới được giao */}
+        {item.status !== "pending - unpaid" && item.status !== "completed" && item.status !== "canceled" && item.status !== "on delivery" &&    (
+          <TouchableOpacity
+            onPress={() => updateStatus(item.id, "on delivery")}
+            style={{
+              backgroundColor: "#f49405",
+              padding: 10,
+              marginRight:10,
+              borderRadius: 6,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Đang giao</Text>
+          </TouchableOpacity>
+        )}
         {/*Nếu đơn đã hoàn thành rồi thì không cho hoàn thành lại*/}
-        {item.status !== "completed" && (
+        {item.status !== "completed" && item.status !== "canceled" && (
           <TouchableOpacity
             onPress={() => updateStatus(item.id, "completed")}
             style={{
@@ -175,7 +196,7 @@ export default function OrdersScreen() {
     </View>
   );
 
-  if (authLoading) {
+  if (!getToken) {
     return (
       <View
         style={{
@@ -194,7 +215,7 @@ export default function OrdersScreen() {
     );
   }
 
-  if (!token || !isAdmin) {
+  if (!getToken) {
     return (
       <View
         style={{

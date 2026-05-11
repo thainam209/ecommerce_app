@@ -13,6 +13,7 @@ import API_BASE_URL from "@/config/api";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useRouter } from "expo-router";
 import axios from "axios";
+import * as SecureStore from 'expo-secure-store';
 
 
 type Order = {
@@ -129,8 +130,6 @@ export default function DashboardScreen() {
   const themeColors = Colors[colorScheme] as any;
   const router = useRouter();
 
-  const {token, isAdmin, loading: authLoading } = useAdminAuth();
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -142,15 +141,30 @@ export default function DashboardScreen() {
   const warning = "#eab308";
   const danger = "#ef4444";
 
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem('admin_token');
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+  
+  const token = getToken();
+
   async function fetchOrders() {
     try {
-      if (!token || !isAdmin) return;
+
+      const token = await getToken();
+      if (!token) return;
+
+      const key = await localStorage.getItem('admin_token');
 
       setLoading(true);
       setError(null);
 
       const res = await axios.get(`${API_BASE_URL}/orders/admin`, 
-      { headers: { Authorization: `Bearer ${token}` } });
+      { headers: { Authorization: `Bearer ${key}` } });
 
       const list: Order[] = res.data.orders || [];
       setOrders(list);
@@ -164,10 +178,9 @@ export default function DashboardScreen() {
   }
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!token || !isAdmin) return;
+    if (!token) return;
     fetchOrders();
-  }, [authLoading, token, isAdmin]);
+  }, []);
 
   const maxRevenueInWeek = useMemo(() => {
     if (!stats) return 1;
@@ -175,7 +188,7 @@ export default function DashboardScreen() {
     return max || 1;
   }, [stats]);
 
-  if (authLoading) {
+  if (!token) {
     return (
       <View
         style={[
@@ -191,7 +204,7 @@ export default function DashboardScreen() {
     );
   }
 
-  if (!token || !isAdmin) {
+  if (!token) {
     return (
       <View
         style={[
@@ -231,7 +244,6 @@ export default function DashboardScreen() {
         ]}
       >
         <View style={{ flex: 1 }}>
-          {/*<Text>{token}</Text>*/}
           <Text>token:{token}</Text>
           <Text style={styles.headerLabel}>Admin Dashboard</Text>
           <Text style={styles.headerTitle}>Tổng quan kinh doanh</Text>
@@ -292,7 +304,7 @@ export default function DashboardScreen() {
           sub="Thông tin & đăng xuất"
           icon="👤"
           color="#22c55e"
-          onPress={() => router.push("/(tabs)")}
+          onPress={() => router.push("/(tabs)/inforUser")}
         />
       </View>
 

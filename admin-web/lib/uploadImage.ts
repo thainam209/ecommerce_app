@@ -1,19 +1,10 @@
 import API_BASE_URL from '../config/api';
-// admin-web/lib/uploadImage.ts
-
-// TODO: thay bằng chỗ em lưu token (AsyncStorage, context, Redux...)
-// Nếu route upload KHÔNG dùng authenticate thì bỏ token luôn.
-async function getAuthToken(): Promise<string | null> {
-  // ví dụ:
-  // return await AsyncStorage.getItem("token");
-  return null;
-}
 
 export async function uploadImageToCloudinary(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file); // tên field phải là "file" giống Postman
 
-  const token = await getAuthToken();
+  const token = await localStorage.getItem("admin_token");
 
   const res = await fetch(`${API_BASE_URL}/upload/image`, {
     method: "POST",

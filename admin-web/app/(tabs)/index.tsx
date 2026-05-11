@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import axios from 'axios';
 import * as jwt_decode from 'jwt-decode';
 import { BackToDashboardButton } from "@/components/BackToDashboardButton";
+import * as SecureStore from 'expo-secure-store';
 
 export default function AdminLoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,29 +26,57 @@ export default function AdminLoginScreen() {
 
   const router = useRouter();
 
-  // 🔥 dùng hook auth, KHÔNG tự redirect ở màn login
-  const { loading: authLoading, isAdmin, user, login, logout } =
-    useAdminAuth({ redirectToLogin: false });
+  const getToken = async () => {
+    try {
+      return await localStorage.getItem("admin_token");
+    } catch (error) {
+      console.error('Lỗi lấy token:', error);
+      return null;
+    }
+  };
+
+  const token = getToken();
+  // Giải mã token để lấy thông tin admin (nếu có)
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
+  const [user, setUser] = useState<null | {id: number; username: string; email: string; role: string }>(null);
 
-  // Nếu đã login admin rồi thì đưa thẳng sang dashboard
-  useEffect(() => {
-    if (!authLoading && isAdmin) {
-      router.replace("/(tabs)/dashboard/dashboard");
+  //gọi api lấy thông tin user về hiển thị
+  const infoUser = async () => {
+    try
+    {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/infouser`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setUser(response.data.infouser);
     }
-  }, [authLoading, isAdmin, router]);
+    catch (error)
+    {
+      console.log('Lỗi lấy thông tin user:', error);
+    }
+  };
+
+  useEffect(() => {
+    infoUser();
+  }, []);
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      Alert.alert("Lỗi", "Nhập đầy đủ email và mật khẩu");
+      alert("Lỗi"+ ": " + "Nhập đầy đủ email và mật khẩu");
       return;
     }
 
     try {
-      setLoggingIn(true);
+      setIsLogin(true);
 
       const res = await axios.post(`${API_BASE_URL}/auth/login`, {
         email: email.trim(),
@@ -58,64 +87,40 @@ export default function AdminLoginScreen() {
       const token = res.data.token;
 
       if (!token) {
-        Alert.alert("Sai tài khoản hoặc mật khẩu");
+        alert("Lỗi"+ ": " + "Sai tài khoản hoặc mật khẩu");
         return;
       }
 
       if (res.data.role !== "admin") {
-        Alert.alert("Lỗi", "Tài khoản này không phải admin!");
+        alert("Lỗi"+ ": " + "Tài khoản này không phải admin!");
         return;
       }
 
-      // Decode JWT để lấy id từ token
-      const decoded: any = jwt_decode.jwtDecode(token);
-      
-      // Tạo object AuthUser đúng định dạng
-      const authUser = {
-        id: decoded.id,
-        username: email.split("@")[0], // Tạm dùng phần trước @ làm username
-        email: email.trim(),
-        role: res.data.role
-      };
-
-      // 🔥 cập nhật hook auth với object đúng định dạng
-      await login(token, authUser);
-
       setPassword("");
-      Alert.alert("Thành công", "Đăng nhập admin thành công!");
+      alert("Đăng nhập admin thành công!");
+      setIsLogin(false);
 
       router.replace("/(tabs)/dashboard/dashboard");
+      //lưu token vào localStorage
+      localStorage.setItem("admin_token", token);
     } catch (err) {
       Alert.alert("Lỗi", "Không kết nối được server");
-    } finally {
-      setLoggingIn(false);
+    } 
+  }
+
+    async function handleLogout() {
+      await localStorage.removeItem("admin_token"); // Xoá token khỏi localStorage
+      Alert.alert("Đăng xuất thành công");
+      //reload lại trang hiện tại (index.tsx) để show form login
+      setIsLogin(true);
+      window.location.reload();
     }
-  }
-
-  async function handleLogout() {
-    await logout(); // hook sẽ clear token và replace về / (tabs)
-  }
-
-  if (authLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8, color: "#999" }}>
-          Đang kiểm tra phiên đăng nhập...
-        </Text>
-      </View>
-    );
-  }
-
-  const loggedIn = isAdmin && !!user;
 
   return (
       <View style={styles.container}>
         <Text style={styles.title}>Admin Account</Text>
-        <Text>{API_BASE_URL}</Text>
-        <Text>{APIKEY}</Text>
-        {!loggedIn ? (
-          // Form login như cũ
+        {/* <Text>{API_BASE_URL}</Text>
+        <Text>{APIKEY}</Text> */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Đăng nhập Admin</Text>
 
@@ -139,9 +144,9 @@ export default function AdminLoginScreen() {
             <TouchableOpacity
               style={styles.button}
               onPress={handleLogin}
-              disabled={loggingIn}
+              // disabled={isLogin}
             >
-              {loggingIn ? (
+              {isLogin ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.buttonText}>Đăng Nhập</Text>
@@ -152,30 +157,7 @@ export default function AdminLoginScreen() {
               * Chỉ tài khoản có role = admin mới đăng nhập được.
             </Text>
           </View>
-        ) : (
-          // Thông tin admin + nút logout
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Thông tin Admin</Text>
-
-            <Text style={styles.info}>ID: {user!.id}</Text>
-            <Text style={styles.info}>Username: {user!.username}</Text>
-            <Text style={styles.info}>Email: {user!.email}</Text>
-            <Text style={styles.info}>Role: {user!.role}</Text>
-            
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#0a0af1", marginTop: 16 }]}
-              onPress={() => router.push("/(tabs)/dashboard/dashboard")}
-            >
-              <Text style={styles.buttonText}>  Quay về Dashboard</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#ef4444", marginTop: 16 }]}
-              onPress={handleLogout}
-            >
-              <Text style={styles.buttonText}>Đăng Xuất</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        
       </View>
   );
 }
