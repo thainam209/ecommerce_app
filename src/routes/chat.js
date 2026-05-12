@@ -82,7 +82,7 @@ async function handleStockStatus(msg) {
     order: [['updatedAt','DESC']],
     limit: 5
   });
-  if (!items.length) return 'Hiện chưa có món nào còn hàng.';
+  if (!items.length) return 'Tất cả các món đều còn hàng, bạn hãy order ngay.';
   const lines = items.map(i => `• ${i.name} — còn ${i.stock} — ${fmtVND(i.price)}`);
   return 'Một số món đang còn hàng:\n' + lines.join('\n');
 }
