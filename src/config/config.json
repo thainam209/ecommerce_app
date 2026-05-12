@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "sa",
-    "password": "nam2092004",
+    "username": "anamlin",
+    "password": "nam209@@",
     "database": "ecommerce",
-    "host": "localhost",
+    "host": "namlin.database.windows.net",
     "dialect": "mssql",
     "dialectOptions": {
       "options": {
@@ -13,17 +13,17 @@
     }
   },
   "test": {
-    "username": "sa",
-    "password": "123456",
+    "username": "anamlin",
+    "password": "nam209@@",
     "database": "ecommerce",
-    "host": "127.0.0.1",
+    "host": "namlin.database.windows.net",
     "dialect": "mssql"
   },
   "production": {
-    "username": "sa",
-    "password": "123456",
+    "username": "anamlin",
+    "password": "nam209@@",
     "database": "ecommerce",
-    "host": "127.0.0.1",
+    "host": "namlin.database.windows.net",
     "dialect": "mssql"
   }
 }
