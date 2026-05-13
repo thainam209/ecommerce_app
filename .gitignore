@@ -1,0 +1,4 @@
+# không hiển thị các file env
+.env
+/ecommmerce-app-frontend/.env
+/admin-web/.env
