@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "d82ce731-c93a-4c14-9722-51dbef1336ca"
+      }
+    },
+    "android": {
+      "package": "com.nam209.myapp"
+    }
+  }
+}

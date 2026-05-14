@@ -68,7 +68,10 @@ export default function OrdersScreen({navigation}: any) {
 
   return (
     <View style={{ flex: 1, padding: 20}}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginTop: 40, marginBottom: 20, color:'#2A4BA0' }}>Danh sách đơn hàng của bạn</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')} style={{ backgroundColor: '#2A4BA0', paddingTop: 15, borderRadius: 16, alignItems: 'center', width: 80,marginTop:20,height:50 }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Home</Text>
+      </TouchableOpacity>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginTop: 20, color:'#2A4BA0' }}>Danh sách đơn hàng của bạn</Text>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {/* tạo một tìm kiếm đơn hàng theo thời gian tạo */}
         

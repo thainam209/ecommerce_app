@@ -4,6 +4,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import API_URL from '../config/api';
 import APIKEY from '../config/key';
+import EXPO_PUBLIC_API_URL from '../config/api';
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');
@@ -115,6 +116,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Text>{EXPO_PUBLIC_API_URL}</Text>
         <Text style={styles.headerTitle}>Sign In</Text>
         <View style={{ width: 24 }} />
       </View>

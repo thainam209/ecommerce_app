@@ -185,9 +185,9 @@ export default function PayOnlineScreen({ navigation, route }: any) {
         }
         setAmount(amount); // cập nhật số tiền vào state
         //qr của Nam
-        //setQrUrl(`https://img.vietqr.io/image/BIDV-V3CASS2153428235-compact2.png?amount=${amount}&addInfo=${content}&accountName={LE THAI NAM}`); // tạo URL QR code với số tiền và nội dung chuyển khoản')
+        setQrUrl(`https://img.vietqr.io/image/BIDV-V3CASS2153428235-compact2.png?amount=${amount}&addInfo=${content}&accountName={LE THAI NAM}`); // tạo URL QR code với số tiền và nội dung chuyển khoản')
         //qr của Linh
-        setQrUrl(`https://img.vietqr.io/image/MB-911977866886-compact2.png?amount=${amount}&addInfo=${content}&accountName={LAI THI PHUONG LINH}`);
+        //setQrUrl(`https://img.vietqr.io/image/MB-911977866886-compact2.png?amount=${amount}&addInfo=${content}&accountName={LAI THI PHUONG LINH}`);
 
         // 2. Lấy danh sách giao dịch
         const transRes = await axios.get(
@@ -250,6 +250,9 @@ export default function PayOnlineScreen({ navigation, route }: any) {
         </Text>
         {/*gọi api để tạo mã qr chuyển khoản - hiện loading khi gọi api */} 
         <Image source={{ uri: qrUrl }} style={{ width: '100%', height: '60%',borderWidth:1 }} resizeMode="contain" />
+        <Text style={{ fontSize: 16, color: 'red', marginTop: 10, textAlign: 'center',fontWeight:'bold' }}>
+            Khách hàng lưu ý không thay đổi số tiền và nội dung chuyển khoản
+        </Text>
         <TouchableOpacity
             onPress={() => {navigation.navigate('OrdersScreen')}}
             style={{ marginTop: 30, backgroundColor: '#2A4BA0',width:180,height:70, alignItems: 'center',borderRadius:16 }}
