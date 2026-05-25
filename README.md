@@ -1,4 +1,5 @@
-## Mô tả dự án: sử dụng express(nodejs) cho backend và react-native(dùng expo để chạy) cho frontend
+## Mô tả dự án: 
+Dự án xây dựng phần mềm giúp người dùng có thể tạo tài khoản, mua hàng và thanh toán Online cho đơn hàng đó. Quản trị viên có thể quản lý các sản phẩm, combo, danh mục, đơn hàng,... Ngoài ra admin có thể quản lý doanh thu qua các dashboard được xây dựng từ dữ liệu DB trả về, duyệt đơn cho khách hàng theo đúng quy trình thực tế
 ## Thư mục chính:
 ### src: chứa các api để gọi đến và tương tác với database
   + Sử dụng express để code các API(chuẩn REST) và sử dụng sequelize(ORM) để dễ dàng tương tác (CRUD) với cơ sở dữ liệu (SQL Server)
@@ -21,5 +22,33 @@
 + Ở thư mục frontend(ecommerce-app-frontend) chạy lệnh npm start, khi có mã QR sử dụng điện thoại quét để tương tác với giao diện
 + Tải file db và import vào sql server (tài khoản demo: nam209@gmail.com | mk:123456)
 
-## Thiếu sót của dự án:
-+ Chưa mở rộng thêm chức năng dành cho shipper để thực hiện theo đúng quy trình thực tế và khách hàng có thể theo dõi đơn hàng của mình đang ở đâu
+## Lý do chọn stack
+1. Expo (React Native): 
++ Dễ bắt đầu và phát triển ứng dụng mobile nhanh (có thể chạy trên cả web)
++ Không cần cấu hình Android/iOS phức tạp
++ Có nhiều thư viện hỗ trợ sẵn
++ Dễ xây dựng UI hiện đại
+2. Node.js (Express)
++ Xử lý API nhanh
++ Kiến trúc non-blocking phù hợp với ứng dụng realtime và nhiều request
++ JavaScript đồng nhất giữa frontend và backend
++ Dễ tổ chức source code
++ Hỗ trợ middleware mạnh mẽ
+3. Sequelize ORM
++ Giúp thao tác database dễ hơn thay vì viết SQL thuần
++ Hỗ trợ migration và model rõ ràng
++ Dễ mapping giữa object và bảng dữ liệu
++ Hỗ trợ tốt cho SQL Server
+4. SQL Server
++ Hệ quản trị cơ sở dữ liệu mạnh và ổn định
++ Phù hợp với dữ liệu có cấu trúc rõ ràng
++ Hỗ trợ tốt các quan hệ dữ liệu
++ Dễ quản lý bằng SQL Server Management Studio (SSMS)
+5. Cloudinary
++ Lưu trữ ảnh trên cloud
++ Giảm tải cho server backend
++ Tối ưu tốc độ tải ảnh
++ Quản lý ảnh dễ dàng
+6. Deploy backend trên render và sử dụng DB của azure
++ Miễn phí và dễ dàng sử dụng
++ Dễ connect và deploy
